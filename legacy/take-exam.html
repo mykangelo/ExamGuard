@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Class Exam - ExamGuard</title><link rel="stylesheet" href="style.css" /></head>
+<body class="exam-body-page" data-role="student">
+  <header class="exam-header">
+    <a class="brand" href="student.html"><span>EG</span> ExamGuard</a>
+    <div class="exam-header-actions"><span class="status-badge success" id="tabStatus">Tab Active</span><span class="status-badge warning"><span id="warningCount">0</span> / <span id="warningLimitDisplay">3</span> Warnings</span></div>
+  </header>
+  <div class="warning-toast" id="warningToast">Monitoring warning recorded.</div>
+  <main class="exam-layout">
+    <section class="monitor-panel">
+      <h2>Monitoring Panel</h2>
+      <div class="camera-box compact-camera"><video id="cameraVideo" autoplay muted playsinline></video><div class="camera-placeholder" id="cameraPlaceholder"><strong>Camera Preview</strong><p>Enable your camera before starting.</p></div></div>
+      <button class="btn btn-primary full" id="enableCameraBtn">Enable Camera</button>
+      <div class="monitor-status"><div><span>Camera</span><strong id="cameraStatus">Waiting</strong></div><div><span>Session</span><strong id="sessionStatus">In Progress</strong></div><div><span>Time Remaining</span><strong id="examTimer">--:--</strong></div></div>
+      <button class="btn btn-secondary full" id="simulateBtn">Simulate Violation</button>
+      <div class="log-list" id="logList"><div class="log-item">No violations recorded.</div></div>
+    </section>
+    <section class="embedded-exam-panel">
+      <div class="panel-header"><div><span class="eyebrow">Class Exam</span><h1 id="activeExamTitle">Loading exam...</h1></div><button class="btn btn-primary" id="submitExamBtn">Submit Exam</button></div>
+      <p id="activeExamInstructions"></p><div class="exam-content" id="examQuestions"></div>
+    </section>
+  </main>
+  <script src="api-client.js"></script><script src="auth-guard.js"></script><script src="app.js"></script><script src="take-exam.js"></script>
+</body>
+</html>

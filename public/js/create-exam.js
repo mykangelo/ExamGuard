@@ -1,0 +1,174 @@
+let exams = [];
+let currentQuestions = [];
+const fields = {
+  title: document.getElementById("examTitleInput"),
+  instructions: document.getElementById("instructionsInput"),
+  timeLimit: document.getElementById("timeLimitInput"),
+  warningLimit: document.getElementById("warningLimitInput"),
+  classId: document.getElementById("examClassInput"),
+  question: document.getElementById("questionInput"),
+  choices: ["choiceA", "choiceB", "choiceC", "choiceD"].map((id) => document.getElementById(id)),
+  correctAnswer: document.getElementById("correctAnswerInput"),
+  explanation: document.getElementById("explanationInput"),
+};
+const questionPreview = document.getElementById("questionPreview");
+const questionCount = document.getElementById("questionCount");
+const savedExams = document.getElementById("savedExams");
+
+const empty = (message) => {
+  const item = document.createElement("div");
+  item.className = "eg-empty";
+  item.textContent = message;
+  return item;
+};
+
+const action = (label, handler, danger = false) => {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = danger ? "eg-btn-danger" : "eg-btn-secondary";
+  button.textContent = label;
+  button.addEventListener("click", handler);
+  return button;
+};
+
+function clearQuestionForm() {
+  fields.question.value = "";
+  fields.choices.forEach((choice) => { choice.value = ""; });
+  fields.correctAnswer.value = "";
+  fields.explanation.value = "";
+}
+
+function addQuestion() {
+  const question = fields.question.value.trim();
+  const choices = fields.choices.map((choice) => choice.value.trim());
+  const correctAnswer = fields.correctAnswer.value;
+  const explanation = fields.explanation.value.trim();
+  if (!question || choices.some((choice) => !choice) || correctAnswer === "" || !explanation) {
+    return alert("Please complete the question, choices, correct answer, and explanation.");
+  }
+  currentQuestions.push({ question, choices, correctAnswer: Number(correctAnswer), explanation });
+  clearQuestionForm();
+  renderQuestionPreview();
+}
+
+function renderQuestionPreview() {
+  questionPreview.replaceChildren();
+  if (!currentQuestions.length) {
+    questionCount.textContent = "No questions added yet.";
+    questionPreview.append(empty("Questions added to the current exam will appear here."));
+    return;
+  }
+  questionCount.textContent = `${currentQuestions.length} question(s)`;
+  currentQuestions.forEach((item, index) => {
+    const card = document.createElement("article");
+    card.className = "eg-builder-item";
+    const content = document.createElement("div");
+    const title = document.createElement("h3");
+    title.className = "font-semibold";
+    title.textContent = `${index + 1}. ${item.question}`;
+    const answer = document.createElement("p");
+    answer.className = "text-slate-300";
+    answer.textContent = `Correct Answer: ${item.choices[item.correctAnswer]}`;
+    const explanation = document.createElement("p");
+    explanation.className = "text-slate-400";
+    explanation.textContent = `Explanation: ${item.explanation}`;
+    content.append(title, answer, explanation);
+    card.append(content, action("Remove", () => { currentQuestions.splice(index, 1); renderQuestionPreview(); }, true));
+    questionPreview.append(card);
+  });
+}
+
+function clearCurrentExam() {
+  if (!confirm("Clear the current exam form and unsaved questions?")) return;
+  clearCurrentExamWithoutConfirmation();
+}
+
+async function saveExam() {
+  const payload = {
+    title: fields.title.value.trim(),
+    instructions: fields.instructions.value.trim(),
+    timeLimit: Number(fields.timeLimit.value),
+    warningLimit: Number(fields.warningLimit.value),
+    classId: fields.classId.value ? Number(fields.classId.value) : null,
+    questions: currentQuestions,
+  };
+  if (!payload.title || !payload.instructions || !Number.isInteger(payload.timeLimit) || payload.timeLimit < 1) {
+    return alert("Please enter the exam title, instructions, and a valid time limit.");
+  }
+  if (!currentQuestions.length) return alert("Please add at least one question before saving the exam.");
+  try {
+    await ExamGuardApi.createExam(payload);
+    clearCurrentExamWithoutConfirmation();
+    await loadData();
+    alert("Exam saved successfully!");
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+function clearCurrentExamWithoutConfirmation() {
+  fields.title.value = "";
+  fields.instructions.value = "";
+  fields.timeLimit.value = "";
+  fields.warningLimit.value = "3";
+  fields.classId.value = "";
+  currentQuestions = [];
+  clearQuestionForm();
+  renderQuestionPreview();
+}
+
+function renderSavedExams() {
+  savedExams.replaceChildren();
+  if (!exams.length) return savedExams.append(empty("No saved exams yet."));
+  exams.forEach((exam, index) => {
+    const card = document.createElement("article");
+    card.className = "eg-builder-item";
+    const content = document.createElement("div");
+    const title = document.createElement("h3");
+    title.className = "font-semibold";
+    title.textContent = `${index + 1}. ${exam.title}`;
+    const details = document.createElement("p");
+    details.className = "text-slate-300";
+    details.textContent = `${exam.questions.length} question(s) | ${exam.timeLimit} minutes | ${exam.warningLimit} warning limit`;
+    content.append(title, details);
+    card.append(content, action("Delete", async () => {
+      if (!confirm("Delete this exam?")) return;
+      await ExamGuardApi.deleteExam(exam.id);
+      await loadData();
+    }, true));
+    savedExams.append(card);
+  });
+}
+
+async function loadData() {
+  try {
+    const [examResult, classResult] = await Promise.all([ExamGuardApi.exams(), ExamGuardApi.classes()]);
+    exams = examResult.exams;
+    fields.classId.replaceChildren();
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = "Save without assigning";
+    fields.classId.append(blank);
+    classResult.classes.forEach((classroom) => {
+      const opt = document.createElement("option");
+      opt.value = classroom.id;
+      opt.textContent = `${classroom.name} - ${classroom.subject}`;
+      fields.classId.append(opt);
+    });
+    renderSavedExams();
+  } catch (error) {
+    savedExams.replaceChildren(empty(error.message));
+  }
+}
+
+document.getElementById("addQuestionBtn").addEventListener("click", addQuestion);
+document.getElementById("clearExamBtn").addEventListener("click", clearCurrentExam);
+document.getElementById("saveExamBtn").addEventListener("click", saveExam);
+document.getElementById("deleteAllExamsBtn").addEventListener("click", async () => {
+  if (!exams.length || !confirm("Delete all saved exams?")) return;
+  for (const exam of exams) await ExamGuardApi.deleteExam(exam.id);
+  await loadData();
+});
+
+renderQuestionPreview();
+loadData();

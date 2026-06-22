@@ -1,0 +1,89 @@
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  password_hash TEXT NOT NULL,
+  password_salt TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('professor', 'student')),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS classrooms (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  professor_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  class_code TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS enrollments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  classroom_id INTEGER NOT NULL REFERENCES classrooms(id) ON DELETE CASCADE,
+  student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  joined_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (classroom_id, student_id)
+);
+
+CREATE TABLE IF NOT EXISTS exams (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  professor_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  instructions TEXT NOT NULL,
+  time_limit INTEGER NOT NULL CHECK (time_limit > 0),
+  warning_limit INTEGER NOT NULL CHECK (warning_limit > 0),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  exam_id INTEGER NOT NULL REFERENCES exams(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  prompt TEXT NOT NULL,
+  explanation TEXT NOT NULL,
+  correct_choice INTEGER NOT NULL CHECK (correct_choice BETWEEN 0 AND 3),
+  UNIQUE (exam_id, position)
+);
+
+CREATE TABLE IF NOT EXISTS choices (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL CHECK (position BETWEEN 0 AND 3),
+  choice_text TEXT NOT NULL,
+  UNIQUE (question_id, position)
+);
+
+CREATE TABLE IF NOT EXISTS exam_assignments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  exam_id INTEGER NOT NULL REFERENCES exams(id) ON DELETE CASCADE,
+  classroom_id INTEGER NOT NULL REFERENCES classrooms(id) ON DELETE CASCADE,
+  assigned_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (exam_id, classroom_id)
+);
+
+CREATE TABLE IF NOT EXISTS exam_attempts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  exam_id INTEGER NOT NULL REFERENCES exams(id) ON DELETE CASCADE,
+  student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  score INTEGER NOT NULL,
+  total INTEGER NOT NULL,
+  warning_count INTEGER NOT NULL DEFAULT 0,
+  answers_json TEXT NOT NULL,
+  started_at TEXT NOT NULL,
+  submitted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (exam_id, student_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_enrollments_student ON enrollments(student_id);
+CREATE INDEX IF NOT EXISTS idx_assignments_classroom ON exam_assignments(classroom_id);
+CREATE INDEX IF NOT EXISTS idx_attempts_student ON exam_attempts(student_id);

@@ -1,0 +1,69 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Room</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="exam-body-page" data-role="student">
+  <header class="exam-header">
+    <a class="brand" href="student.html"><span>EG</span> ExamGuard</a>
+    <div class="exam-header-actions">
+      <span class="status-badge success" id="tabStatus">Tab Active</span>
+      <span class="status-badge warning"><span id="warningCount">0</span> / 3 Warnings</span>
+    </div>
+  </header>
+
+  <div class="warning-toast" id="warningToast">Monitoring warning recorded.</div>
+
+  <main class="exam-layout">
+    <section class="monitor-panel">
+      <h2>Monitoring Panel</h2>
+      <div class="camera-box compact-camera">
+        <video id="cameraVideo" autoplay muted playsinline></video>
+        <div class="camera-placeholder" id="cameraPlaceholder">
+          <strong>Camera Preview</strong>
+          <p>Enable your camera before starting. The system monitors face presence, session focus, and warning count.</p>
+        </div>
+      </div>
+      <button class="btn btn-primary full" id="enableCameraBtn">Enable Camera</button>
+
+      <div class="monitor-status">
+        <div><span>Camera</span><strong id="cameraStatus">Waiting</strong></div>
+        <div><span>Session</span><strong id="sessionStatus">In Progress</strong></div>
+      </div>
+
+      <button class="btn btn-secondary full" id="simulateBtn">Simulate Violation</button>
+      <div class="log-list" id="logList">
+        <div class="log-item">No violations recorded.</div>
+      </div>
+    </section>
+
+    <section class="embedded-exam-panel">
+      <div class="panel-header">
+        <div>
+          <span class="eyebrow">Embedded External Exam</span>
+          <h1>Assessment Window</h1>
+        </div>
+        <button class="btn btn-primary" id="submitBtn">Submit Monitoring Session</button>
+      </div>
+
+      <div class="embed-frame">
+        <div>
+          <h2>External exam loads here</h2>
+          <p>
+            This area is reserved for an embedded exam from a professor-provided platform such as Google Forms, Kahoot, Wayground, or another assessment provider. ExamGuard remains responsible for monitoring the student session, warnings, and logs.
+          </p>
+          <p class="embed-note">
+            In the actual version, this can be replaced with an iframe or secure external exam link.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="api-client.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

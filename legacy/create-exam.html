@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Exam - ExamGuard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-role="professor">
+  <header class="site-header">
+    <a class="brand" href="index.html"><span>EG</span> ExamGuard</a>
+    <nav class="nav-links">
+      <a href="professor.html">Dashboard</a>
+      <a href="create-exam.html">Create Exam</a>
+      <a href="professor-classes.html">Classes</a>
+      <a href="student.html">Student View</a>
+      <a href="login.html">Logout</a>
+    </nav>
+  </header>
+
+  <main class="dashboard-layout">
+    <aside class="sidebar">
+      <h2>Professor Panel</h2>
+      <a href="professor.html#create">Create Session</a>
+      <a class="active" href="create-exam.html">Create Exam</a>
+      <a href="professor-classes.html">Classes</a>
+      <a href="professor.html#active">Active Sessions</a>
+      <a href="professor.html#logs">Violation Logs</a>
+    </aside>
+
+    <section class="dashboard-main exam-builder">
+      <div class="page-title">
+        <span class="eyebrow">Professor Interface</span>
+        <h1>Create a new exam.</h1>
+        <p>Enter the exam details, add questions, and save the complete exam when it is ready.</p>
+      </div>
+
+      <section class="panel-card">
+        <h2>Exam Details</h2>
+        <form id="examDetailsForm" class="form-card compact" novalidate>
+          <label for="examTitleInput">Exam Title</label>
+          <input id="examTitleInput" type="text" placeholder="Midterm Examination" />
+
+          <label for="instructionsInput">Instructions</label>
+          <textarea id="instructionsInput" placeholder="Enter instructions for students"></textarea>
+
+          <div class="form-grid">
+            <div>
+              <label for="timeLimitInput">Time Limit (minutes)</label>
+              <input id="timeLimitInput" type="number" min="1" step="1" placeholder="60" />
+            </div>
+            <div>
+              <label for="warningLimitInput">Warning Limit</label>
+              <select id="warningLimitInput">
+                <option value="3">3 warnings</option>
+                <option value="5">5 warnings</option>
+              </select>
+            </div>
+            <div>
+              <label for="examClassInput">Assign to Class</label>
+              <select id="examClassInput"><option value="">Save without assigning</option></select>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel-card">
+        <h2>Add Question</h2>
+        <form id="questionForm" class="form-card compact" novalidate>
+          <label for="questionInput">Question</label>
+          <textarea id="questionInput" placeholder="Enter your question"></textarea>
+
+          <div class="form-grid">
+            <div><label for="choiceA">Choice A</label><input id="choiceA" type="text" placeholder="Enter choice A" /></div>
+            <div><label for="choiceB">Choice B</label><input id="choiceB" type="text" placeholder="Enter choice B" /></div>
+            <div><label for="choiceC">Choice C</label><input id="choiceC" type="text" placeholder="Enter choice C" /></div>
+            <div><label for="choiceD">Choice D</label><input id="choiceD" type="text" placeholder="Enter choice D" /></div>
+          </div>
+
+          <label for="correctAnswerInput">Correct Answer</label>
+          <select id="correctAnswerInput">
+            <option value="">Select correct answer</option>
+            <option value="0">Choice A</option>
+            <option value="1">Choice B</option>
+            <option value="2">Choice C</option>
+            <option value="3">Choice D</option>
+          </select>
+
+          <label for="explanationInput">Explanation</label>
+          <textarea id="explanationInput" placeholder="Explain why the answer is correct"></textarea>
+
+          <div class="form-actions">
+            <button id="addQuestionBtn" class="btn btn-primary" type="button">Add Question</button>
+            <button id="clearExamBtn" class="btn btn-secondary" type="button">Clear Current Form</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel-card">
+        <div class="panel-header">
+          <h2>Current Exam Preview</h2>
+          <span id="questionCount" class="status-badge warning">No questions added yet.</span>
+        </div>
+        <div id="questionPreview" class="builder-list"></div>
+        <button id="saveExamBtn" class="btn btn-primary builder-save" type="button">Save Exam</button>
+      </section>
+
+      <section class="panel-card">
+        <div class="panel-header">
+          <h2>Saved Exams</h2>
+          <button id="deleteAllExamsBtn" class="btn btn-secondary" type="button">Delete All Exams</button>
+        </div>
+        <div id="savedExams" class="builder-list"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="api-client.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="create-exam.js"></script>
+</body>
+</html>

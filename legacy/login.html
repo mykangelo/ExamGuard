@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | ExamGuard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="auth-body">
+  <main class="auth-card">
+    <a class="brand centered" href="index.html"><span>EG</span> ExamGuard</a>
+    <h1>Sign in to continue</h1>
+    <p>Select your role to open the correct workspace.</p>
+
+    <form class="form-card" id="loginForm">
+      <label for="emailInput">Email Address</label>
+      <input id="emailInput" type="email" placeholder="name@example.com" required />
+
+      <label for="passwordInput">Password</label>
+      <input id="passwordInput" type="password" placeholder="Enter your password" required />
+
+      <label>Role</label>
+      <select id="roleSelect">
+        <option value="professor">Professor</option>
+        <option value="student">Student</option>
+      </select>
+
+      <button class="btn btn-primary full" type="submit" id="loginBtn">Continue</button>
+    </form>
+  </main>
+
+  <script src="api-client.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>

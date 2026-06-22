@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classes - ExamGuard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-role="professor">
+  <header class="site-header">
+    <a class="brand" href="index.html"><span>EG</span> ExamGuard</a>
+    <nav class="nav-links"><a href="professor.html">Dashboard</a><a href="create-exam.html">Create Exam</a><a href="professor-classes.html">Classes</a><a href="login.html">Logout</a></nav>
+  </header>
+  <main class="dashboard-layout">
+    <aside class="sidebar">
+      <h2>Professor Panel</h2>
+      <a href="professor.html#create">Create Session</a><a href="create-exam.html">Create Exam</a><a class="active" href="professor-classes.html">Classes</a><a href="professor.html#logs">Participation Logs</a>
+    </aside>
+    <section class="dashboard-main exam-builder">
+      <div class="page-title"><span class="eyebrow">Professor Interface</span><h1>Manage classes.</h1><p>Create joinable classes, enroll students with a class code, and assign saved exams.</p></div>
+      <section class="panel-card">
+        <h2>Create Class</h2>
+        <form class="form-card compact" id="createClassForm">
+          <div class="form-grid"><div><label for="classNameInput">Class Name</label><input id="classNameInput" placeholder="BSIT 3A" /></div><div><label for="classSubjectInput">Subject</label><input id="classSubjectInput" placeholder="Computer Networks" /></div></div>
+          <button class="btn btn-primary" type="submit">Create Class</button>
+        </form>
+      </section>
+      <section class="panel-card">
+        <h2>Assign Saved Exam</h2>
+        <form class="form-card compact" id="assignExamForm">
+          <div class="form-grid"><div><label for="examSelect">Exam</label><select id="examSelect"></select></div><div><label for="classSelect">Class</label><select id="classSelect"></select></div></div>
+          <button class="btn btn-primary" type="submit">Assign Exam</button>
+        </form>
+      </section>
+      <section class="panel-card"><div class="panel-header"><h2>Your Classes</h2><span class="status-badge success" id="classCount">0 classes</span></div><div class="builder-list" id="classList"></div></section>
+    </section>
+  </main>
+  <script src="api-client.js"></script><script src="auth-guard.js"></script><script src="professor-classes.js"></script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Professor Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-role="professor">
+  <header class="site-header">
+    <a class="brand" href="index.html"><span>EG</span> ExamGuard</a>
+    <nav class="nav-links">
+      <a href="professor.html">Dashboard</a>
+      <a href="create-exam.html">Create Exam</a>
+      <a href="professor-classes.html">Classes</a>
+      <a href="student.html">Student View</a>
+      <a href="login.html">Logout</a>
+    </nav>
+  </header>
+
+  <main class="dashboard-layout">
+    <aside class="sidebar">
+      <h2>Professor Panel</h2>
+      <a class="active" href="#create">Create Session</a>
+      <a href="create-exam.html">Create Exam</a>
+      <a href="professor-classes.html">Classes</a>
+      <a href="#active">Active Sessions</a>
+      <a href="#logs">Violation Logs</a>
+    </aside>
+
+    <section class="dashboard-main">
+      <div class="page-title">
+        <span class="eyebrow">Professor Interface</span>
+        <h1>Create and monitor exam sessions.</h1>
+        <p>Paste an external exam link from Google Forms, Kahoot, Wayground, or another supported platform. ExamGuard will handle mandatory camera monitoring, browser activity checks, warning enforcement, real-time alerts, and violation logs.</p>
+      </div>
+
+      <div class="dashboard-grid">
+        <section class="panel-card" id="create">
+          <h2>Create Monitored Session</h2>
+          <form class="form-card compact">
+            <label>Exam Title</label>
+            <input type="text" placeholder="Midterm Examination" />
+
+            <label>External Exam Link or Embed URL</label>
+            <input type="url" placeholder="https://forms.google.com/..." />
+
+            <label>Warning Limit</label>
+            <select>
+              <option>3 warnings</option>
+              <option>5 warnings</option>
+            </select>
+
+            <button class="btn btn-primary" type="button">Create Session</button>
+          </form>
+        </section>
+
+        <section class="panel-card" id="active">
+          <h2>Active Session Summary</h2>
+          <div class="summary-list">
+            <div><span>Enrolled Students</span><strong id="enrolledStudentCount">0</strong></div>
+            <div><span>Warnings Recorded</span><strong id="recordedWarningCount">0</strong></div>
+            <div><span>Exam Submissions</span><strong id="submissionCount">0</strong></div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel-card" id="logs">
+        <h2>Violation Logs</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Exam</th>
+                <th>Time</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody id="participationLogBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+  <script src="api-client.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="professor.js"></script>
+</body>
+</html>

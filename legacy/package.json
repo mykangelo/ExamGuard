@@ -1,0 +1,7 @@
+{
+  "name": "examguard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": { "start": "node server.js", "check": "node --check server.js", "create-user": "node create-user.js" },
+  "engines": { "node": ">=22.5" }
+}
