@@ -14,23 +14,42 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $input = $request->validate([
-            'email' => ['required', 'email'],
+            'email'    => ['required', 'email'],
             'password' => ['required', 'string'],
-            'role' => ['required', 'in:professor,student'],
         ]);
 
-        $user = User::where('email', $input['email'])
-            ->where('role', $input['role'])
-            ->first();
+        $user = User::where('email', $input['email'])->first();
 
         if (! $user || ! Hash::check($input['password'], $user->password)) {
-            return response()->json(['error' => 'Invalid email, password, or role.'], 401);
+            return response()->json(['error' => 'Invalid email or password.'], 401);
         }
 
         Auth::login($user);
         $request->session()->regenerate();
 
         return response()->json(['user' => $user->toAuthArray()]);
+    }
+
+    public function register(Request $request): JsonResponse
+    {
+        $input = $request->validate([
+            'name'                  => ['required', 'string', 'max:255'],
+            'email'                 => ['required', 'email', 'unique:users,email'],
+            'password'              => ['required', 'string', 'min:8', 'confirmed'],
+            'role'                  => ['required', 'in:professor,student'],
+        ]);
+
+        $user = User::create([
+            'name'     => $input['name'],
+            'email'    => $input['email'],
+            'password' => $input['password'],
+            'role'     => $input['role'],
+        ]);
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return response()->json(['user' => $user->toAuthArray()], 201);
     }
 
     public function logout(Request $request): JsonResponse

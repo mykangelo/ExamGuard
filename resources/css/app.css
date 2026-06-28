@@ -12,6 +12,9 @@
     --color-eg-success: #22c55e;
     --color-eg-warning: #f59e0b;
     --color-eg-danger: #ef4444;
+    /* Marketing page palette */
+    --color-navy: #0f1e3d;
+    --color-brand: #3b82f6;
 }
 
 @layer base {
@@ -25,8 +28,8 @@
 }
 
 @layer components {
-    .eg-brand span {
-        @apply inline-flex h-9 w-9 items-center justify-center rounded-xl bg-sky-400/15 text-sm font-bold text-sky-300;
+    .eg-brand img {
+        @apply h-8 w-8 object-contain drop-shadow-[0_0_6px_rgba(56,189,248,0.5)];
     }
 
     .eg-panel {
@@ -34,7 +37,7 @@
     }
 
     .eg-btn-primary {
-        @apply inline-flex items-center justify-center rounded-2xl bg-sky-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-300;
+        @apply inline-flex items-center justify-center rounded-2xl bg-sky-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-300 disabled:opacity-60 disabled:cursor-not-allowed;
     }
 
     .eg-btn-secondary {
@@ -75,5 +78,163 @@
 
     .warning-toast.show {
         @apply opacity-100;
+    }
+
+    /* ── Marketing page components ─────────────────────── */
+    .mkt-input {
+        @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#3b82f6] focus:ring-2 focus:ring-[#3b82f6]/20;
+    }
+
+    .mkt-btn-primary {
+        @apply inline-flex cursor-pointer items-center justify-center rounded-lg bg-[#3b82f6] px-5 py-2 text-sm font-[500] text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-60;
+    }
+
+    .mkt-btn-outline {
+        @apply inline-flex cursor-pointer items-center justify-center rounded-lg border border-[#3b82f6] px-5 py-2 text-sm font-[500] text-[#3b82f6] transition hover:bg-blue-50;
+    }
+
+    .mkt-btn-ghost {
+        @apply inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/25 px-5 py-2 text-sm font-[500] text-white transition hover:bg-white/10;
+    }
+
+    /* Scroll-reveal base state */
+    .reveal {
+        opacity: 0;
+        transform: translateY(22px);
+        transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+
+    .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* ── Typeform-style scroll reveal ──────────────────── */
+    .tf-reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.65s ease-out, transform 0.65s ease-out;
+    }
+
+    .tf-reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Hero word-by-word animation */
+    .hero-word {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    .hero-word.animate {
+        animation: tfWordReveal 0.6s ease-out forwards;
+    }
+
+    /* ── Typeform pill buttons ──────────────────────────── */
+    .tf-btn-primary {
+        @apply inline-flex cursor-pointer items-center justify-center rounded-full bg-[#3b82f6] px-9 py-3.5 text-base font-semibold text-white transition duration-200 hover:brightness-110 active:scale-95;
+        transform-origin: center;
+    }
+
+    .tf-btn-primary:hover {
+        transform: scale(1.03);
+    }
+
+    .tf-btn-outline-dark {
+        @apply inline-flex cursor-pointer items-center justify-center rounded-full border border-white/25 px-9 py-3.5 text-base font-semibold text-white transition duration-200 hover:border-white/50;
+        transform-origin: center;
+    }
+
+    .tf-btn-outline-dark:hover {
+        transform: scale(1.03);
+    }
+
+    .tf-btn-outline-light {
+        @apply inline-flex cursor-pointer items-center justify-center rounded-full border border-[#3b82f6]/40 px-9 py-3.5 text-base font-semibold text-[#3b82f6] transition duration-200 hover:border-[#3b82f6] hover:bg-[#3b82f6]/5;
+        transform-origin: center;
+    }
+
+    .tf-btn-outline-light:hover {
+        transform: scale(1.03);
+    }
+
+    /* CTA pulse */
+    .cta-pulse {
+        animation: tfPulse 2.8s ease-in-out infinite;
+    }
+
+    /* Nav underline slide */
+    .nav-slide {
+        position: relative;
+    }
+
+    .nav-slide::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background: currentColor;
+        transition: width 0.25s ease, left 0.25s ease;
+    }
+
+    .nav-slide:hover::after {
+        width: 100%;
+        left: 0;
+    }
+}
+
+@keyframes tfWordReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes tfPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.25); }
+    50%       { box-shadow: 0 0 0 12px rgba(255, 255, 255, 0); }
+}
+
+/* ── Tour page sidebar active state ───────────────────── */
+.tour-sidebar-link.is-active {
+    background-color: rgba(59, 130, 246, 0.12);
+    color: #3b82f6 !important;
+    border-left-color: #3b82f6 !important;
+}
+
+.tour-sidebar-link.is-active i {
+    color: #3b82f6;
+}
+
+.tour-tab-link.is-active {
+    background-color: rgba(59, 130, 246, 0.12);
+    color: #3b82f6 !important;
+}
+
+/* Respect reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+    .tf-reveal {
+        transition: none;
+        opacity: 1;
+        transform: none;
+    }
+
+    .hero-word,
+    .hero-word.animate {
+        animation: none !important;
+        opacity: 1;
+        transform: none;
+    }
+
+    .cta-pulse {
+        animation: none;
+    }
+
+    .nav-slide::after {
+        transition: none;
     }
 }

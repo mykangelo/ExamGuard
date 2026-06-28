@@ -9,10 +9,21 @@ use App\Http\Controllers\Api\ProfessorController;
 use App\Http\Controllers\PageController;
 use Illuminate\Support\Facades\Route;
 
+// Homepage (marketing) — authenticated users are redirected to their dashboard
 Route::get('/', [PageController::class, 'home']);
-Route::get('/login', [PageController::class, 'login'])->middleware('guest');
 
-Route::post('/api/auth/login', [AuthController::class, 'login']);
+// Auth pages — guest only
+Route::get('/login',    [PageController::class, 'login'])->middleware('guest');
+Route::get('/register', [PageController::class, 'register'])->middleware('guest');
+
+// Marketing sub-pages — public
+Route::get('/tour',    [PageController::class, 'tour']);
+Route::get('/pricing', [PageController::class, 'pricing']);
+Route::get('/faq',     [PageController::class, 'faq']);
+Route::get('/contact', [PageController::class, 'contact']);
+
+Route::post('/api/auth/login',    [AuthController::class, 'login']);
+Route::post('/api/auth/register', [AuthController::class, 'register']);
 
 Route::middleware('auth')->group(function () {
     Route::post('/api/auth/logout', [AuthController::class, 'logout']);
