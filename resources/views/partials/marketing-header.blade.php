@@ -4,31 +4,13 @@
 <header class="sticky top-0 z-50 bg-[#0f1e3d]">
     <div class="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-4">
 
-        {{-- ── Left: Logo + hover dropdown ── --}}
-        <div class="group/logo relative shrink-0">
-            <a href="/"
-               class="flex items-center gap-2.5 text-[18px] font-bold text-white transition hover:opacity-90">
-                <img src="/images/logo.png" alt="ExamGuard"
-                     class="h-8 w-8 object-contain drop-shadow-[0_0_6px_rgba(59,130,246,0.5)]">
-                ExamGuard
-            </a>
-
-            {{-- Logo hover dropdown --}}
-            <div class="pointer-events-none absolute left-0 top-full z-50 mt-2 w-52 -translate-y-2 rounded-xl border border-white/10 bg-[#162444] p-2 opacity-0 shadow-2xl shadow-black/40 transition-all duration-200 group-hover/logo:pointer-events-auto group-hover/logo:translate-y-0 group-hover/logo:opacity-100">
-                @foreach([
-                    ['/', 'Home', 'home'],
-                    ['/tour', 'Take a Tour', 'tour'],
-                    ['/pricing', 'Pricing', 'pricing'],
-                    ['/faq', 'FAQ', 'faq'],
-                    ['/contact', 'Contact Us', 'contact'],
-                ] as [$href, $label, $page])
-                <a href="{{ $href }}"
-                   class="block rounded-lg px-3 py-2.5 text-[14px] transition {{ $activePage === $page ? 'font-semibold text-white bg-white/5' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
-                    {{ $label }}
-                </a>
-                @endforeach
-            </div>
-        </div>
+        {{-- ── Left: Logo ── --}}
+        <a href="/" class="flex shrink-0 items-center gap-2.5 text-white transition hover:opacity-90"
+           style="font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:600; letter-spacing:-0.4px;">
+            <img src="/images/logo.png" alt="examguard"
+                 class="h-11 w-auto object-contain drop-shadow-[0_0_6px_rgba(59,130,246,0.5)]">
+            examguard.
+        </a>
 
         {{-- ── Center: Nav links — desktop ── --}}
         <nav class="hidden flex-1 items-center justify-center gap-1 lg:flex">

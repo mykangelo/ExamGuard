@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Exam;
 use Illuminate\Support\Facades\Auth;
+
+use Illuminate\Http\Request;
 
 class PageController extends Controller
 {
@@ -24,6 +27,11 @@ class PageController extends Controller
     public function register()
     {
         return view('pages.register');
+    }
+
+    public function verifyEmail()
+    {
+        return view('pages.verify-email');
     }
 
     public function tour()
@@ -48,7 +56,20 @@ class PageController extends Controller
 
     public function professor()
     {
-        return view('pages.professor');
+        $user = Auth::user();
+
+        $exams = Exam::where('professor_id', $user->id)
+            ->with(['attempts.student', 'assignments.classroom.enrollments', 'questions'])
+            ->withCount('questions')
+            ->orderByDesc('updated_at')
+            ->get()
+            ->each(fn (Exam $exam) => $exam->syncLifecycleStatus());
+
+        return view('pages.professor', [
+            'user'                 => $user,
+            'exams'                => $exams,
+            'pendingNotifications' => 0,
+        ]);
     }
 
     public function student()
@@ -56,14 +77,24 @@ class PageController extends Controller
         return view('pages.student');
     }
 
-    public function createExam()
+    public function createExam(Request $request)
     {
-        return view('pages.create-exam');
-    }
+        $user = Auth::user();
+        $examId = $request->query('id');
 
-    public function professorClasses()
-    {
-        return view('pages.professor-classes');
+        if ($examId) {
+            $exam = Exam::where('professor_id', $user->id)->find($examId);
+            if ($exam && ! $exam->isEditable()) {
+                return redirect('/professor?view=exams');
+            }
+        }
+
+        $query = http_build_query(array_filter([
+            'view' => 'create-exam',
+            'id' => $examId,
+        ]));
+
+        return redirect('/professor?'.$query);
     }
 
     public function takeExam()

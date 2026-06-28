@@ -18,9 +18,23 @@ let trackingInterval = null;
 let lastNoFaceWarningAt = 0;
 let lastMultipleFaceWarningAt = 0;
 let sessionWarningLimit = 3;
+let tabSwitchCount = 0;
+let tabHiddenSince = null;
+let lastMouseLeaveWarningAt = 0;
+
+const SEVERITY = {
+  MINOR: "minor",
+  MODERATE: "moderate",
+  CRITICAL: "critical",
+};
 
 document.addEventListener("examguard:warning-limit", (event) => {
   sessionWarningLimit = Number(event.detail) || 3;
+});
+
+document.addEventListener("examguard:session-started", (event) => {
+  warningCount = Number(event.detail?.warningCount) || 0;
+  if (warningCountEl) warningCountEl.textContent = String(warningCount);
 });
 
 async function setupFaceLandmarker() {
@@ -49,7 +63,7 @@ async function setupFaceLandmarker() {
 
 async function enableCamera() {
   if (!navigator.mediaDevices?.getUserMedia) {
-    addWarning("Camera API is not available in this browser");
+    addWarning("camera_unavailable", SEVERITY.CRITICAL, "Camera API is not available in this browser");
     return;
   }
 
@@ -64,7 +78,7 @@ async function enableCamera() {
   } catch (error) {
     cameraStatus.textContent = "Blocked";
     if (faceStatus) faceStatus.textContent = "Unavailable";
-    addWarning("Camera permission or face tracking was blocked or unavailable");
+    addWarning("camera_blocked", SEVERITY.CRITICAL, "Camera permission or face tracking was blocked or unavailable");
   }
 }
 
@@ -87,7 +101,7 @@ function startFaceTracking() {
       if (faceStatus) faceStatus.textContent = "No Face";
       if (now - lastNoFaceWarningAt > 6000) {
         lastNoFaceWarningAt = now;
-        addWarning("No face detected in camera frame");
+        addWarning("no_face", SEVERITY.MODERATE, "No face detected in camera frame");
       }
       return;
     }
@@ -95,9 +109,28 @@ function startFaceTracking() {
     if (faceCount > 1 && now - lastMultipleFaceWarningAt > 6000) {
       if (faceStatus) faceStatus.textContent = "Multiple Faces";
       lastMultipleFaceWarningAt = now;
-      addWarning("Multiple faces detected in camera frame");
+      addWarning("multiple_faces", SEVERITY.CRITICAL, "Multiple faces detected in camera frame");
     }
   }, 700);
+}
+
+function captureSnapshot() {
+  if (!cameraVideo || cameraVideo.readyState < 2 || !cameraVideo.videoWidth) {
+    return null;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = cameraVideo.videoWidth;
+  canvas.height = cameraVideo.videoHeight;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+  try {
+    return canvas.toDataURL("image/jpeg", 0.72);
+  } catch (_) {
+    return null;
+  }
 }
 
 function showWarningToast(message) {
@@ -107,7 +140,13 @@ function showWarningToast(message) {
   setTimeout(() => warningToast.classList.remove("show"), 3500);
 }
 
-function addWarning(reason) {
+function severityLabel(severity) {
+  if (severity === SEVERITY.CRITICAL) return "Critical";
+  if (severity === SEVERITY.MODERATE) return "Moderate";
+  return "Minor";
+}
+
+function addWarning(type, severity, reason) {
   if (sessionLocked || !warningCountEl || !logList) return;
 
   warningCount += 1;
@@ -119,9 +158,21 @@ function addWarning(reason) {
   }
 
   const item = document.createElement("div");
-  item.className = "rounded-xl bg-white/5 px-4 py-2";
-  item.textContent = `${reason} - ${new Date().toLocaleTimeString()}`;
+  item.className = `rounded-xl bg-white/5 px-4 py-2 pg-violation-log-item pg-severity-${severity}`;
+  item.innerHTML = `<span class="pg-severity-pill pg-severity-${severity}">${severityLabel(severity)}</span> ${reason} — ${new Date().toLocaleTimeString()}`;
   logList.prepend(item);
+
+  const snapshot = captureSnapshot();
+  const payload = {
+    type,
+    severity,
+    message: reason,
+    snapshot,
+    occurredAt: new Date().toISOString(),
+  };
+
+  document.dispatchEvent(new CustomEvent("examguard:violation", { detail: payload }));
+  window.ExamGuardSession?.reportViolation?.(payload);
 
   if (warningCount >= sessionWarningLimit) {
     lockSession();
@@ -149,7 +200,9 @@ function lockSession() {
 }
 
 if (enableCameraBtn) enableCameraBtn.addEventListener("click", enableCamera);
-if (simulateBtn) simulateBtn.addEventListener("click", () => addWarning("Simulated monitoring violation"));
+if (simulateBtn) {
+  simulateBtn.addEventListener("click", () => addWarning("simulated", SEVERITY.MINOR, "Simulated monitoring violation"));
+}
 
 if (submitBtn) {
   submitBtn.addEventListener("click", () => {
@@ -166,14 +219,26 @@ document.addEventListener("visibilitychange", () => {
   if (!tabStatus) return;
 
   if (document.hidden) {
+    tabHiddenSince = Date.now();
     tabStatus.textContent = "Tab Switched";
     tabStatus.className = "eg-badge-danger";
-    addWarning("Tab switching detected");
+    tabSwitchCount += 1;
+    const severity = tabSwitchCount >= 3 ? SEVERITY.MODERATE : SEVERITY.MINOR;
+    addWarning("tab_switch", severity, "Tab switching detected");
   } else {
+    tabHiddenSince = null;
     tabStatus.textContent = "Tab Active";
     tabStatus.className = "eg-badge-success";
     if (!sessionLocked && sessionStatus && warningCount > 0) {
       sessionStatus.textContent = "Warning Recorded";
     }
   }
+});
+
+document.addEventListener("mouseleave", () => {
+  if (sessionLocked || document.hidden) return;
+  const now = Date.now();
+  if (now - lastMouseLeaveWarningAt < 8000) return;
+  lastMouseLeaveWarningAt = now;
+  addWarning("mouse_leave", SEVERITY.MINOR, "Mouse left the exam window");
 });

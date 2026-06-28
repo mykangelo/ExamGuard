@@ -9,7 +9,7 @@ data-role="student"
 @section('content')
 <header class="border-b border-white/10 bg-slate-950/50 backdrop-blur">
     <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <a href="/student" class="eg-brand flex items-center gap-2.5 text-lg font-bold"><img src="/images/logo.png" alt="ExamGuard logo"> ExamGuard</a>
+        <a href="/student" class="eg-brand flex items-center gap-2.5" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:600; letter-spacing:-0.4px;"><img src="/images/logo.png" alt="examguard logo" class="h-9 w-auto object-contain"> examguard.</a>
         <div class="flex items-center gap-3">
             <span class="eg-badge-success" id="tabStatus">Tab Active</span>
             <span class="eg-badge-warning"><span id="warningCount">0</span> / 3 Warnings</span>

@@ -39,16 +39,17 @@ $sidebarNav = [
 </div>
 
 {{-- ── Two-column layout ── --}}
-<div class="flex bg-[#0f1e3d]">
+<div class="bg-[#0f1e3d]">
+<div class="flex max-w-5xl mx-auto">
 
     {{-- ══ LEFT SIDEBAR ══ --}}
-    <aside class="hidden lg:block w-60 shrink-0 sticky top-[72px] self-start h-[calc(100vh-72px)] overflow-y-auto border-r border-white/[0.08] bg-[#0f1e3d]">
-        <nav class="py-5 px-3">
+    <aside class="hidden lg:block w-48 shrink-0 sticky top-[72px] self-start h-[calc(100vh-72px)] overflow-y-auto border-r border-white/[0.08] bg-[#0f1e3d]">
+        <nav class="py-4 px-2">
             @foreach($sidebarNav as [$href, $icon, $label, $id])
             <a href="{{ $href }}"
-               class="tour-sidebar-link group flex items-center gap-3 rounded-r-lg border-l-[3px] border-transparent px-3 py-3 text-[14px] text-white/55 transition-all duration-200 hover:bg-white/[0.04] hover:text-white"
+               class="tour-sidebar-link group flex items-center gap-2.5 rounded-r-lg border-l-[3px] border-transparent px-3 py-2.5 text-[13px] text-white/55 transition-all duration-200 hover:bg-white/[0.04] hover:text-white"
                data-section="{{ $id }}">
-                <i class="{{ $icon }} text-[17px] shrink-0 transition-colors duration-200"></i>
+                <i class="{{ $icon }} text-[15px] shrink-0 transition-colors duration-200"></i>
                 <span>{{ $label }}</span>
             </a>
             @endforeach
@@ -56,17 +57,15 @@ $sidebarNav = [
     </aside>
 
     {{-- ══ MAIN CONTENT ══ --}}
-    <main class="flex-1 min-w-0 px-8 pb-24 pt-14 md:px-12 lg:px-16">
+    <main class="flex-1 min-w-0 px-6 pb-16 pt-8 md:px-10">
 
         {{-- ════════════════════════════════════════════
              SECTION 1 — OVERVIEW
         ════════════════════════════════════════════ --}}
-        <section id="overview" data-tour-section="overview" class="mb-20 scroll-mt-24">
-            <div class="max-w-2xl mx-auto">
-            <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Overview</p>
-            <h1 class="tf-reveal mb-1 text-[2rem] font-[700] leading-[1.15] text-white">How ExamGuard works</h1>
-            <p class="tf-reveal mb-10 text-[17px] text-[#3b82f6]" style="transition-delay:80ms">Here's the simplicity of ExamGuard.</p>
-            </div>
+        <section id="overview" data-tour-section="overview" class="mb-10 scroll-mt-20">
+            <p class="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Overview</p>
+            <h1 class="tf-reveal mb-1 text-[1.7rem] font-[700] leading-[1.15] text-white">How ExamGuard works</h1>
+            <p class="tf-reveal mb-5 text-[15px] text-[#3b82f6]" style="transition-delay:80ms">Here's the simplicity of ExamGuard.</p>
 
             @php $ovSteps = [
                 ['Create an exam',       [['ti-import','Import your questions'],['ti-database','Draw from your question bank'],['ti-tags','Categorize questions by topic']], 'builder'],
@@ -77,26 +76,26 @@ $sidebarNav = [
             ]; @endphp
 
             {{-- Timeline: flex column keeps line perfectly between circles --}}
-            <div class="space-y-0 max-w-2xl mx-auto">
+            <div class="space-y-0">
                 @foreach($ovSteps as $si => [$stitle, $bullets, $mtype])
-                <div class="tf-reveal flex gap-6" style="transition-delay:{{ $si * 70 }}ms">
+                <div class="tf-reveal flex gap-4" style="transition-delay:{{ $si * 70 }}ms">
 
                     {{-- Circle + vertical connector --}}
                     <div class="flex flex-col items-center">
-                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#3b82f6] bg-[#0f1e3d] text-[18px] font-bold text-white z-10">{{ $si + 1 }}</div>
+                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-[#3b82f6] bg-[#0f1e3d] text-[14px] font-bold text-white z-10">{{ $si + 1 }}</div>
                         @if(!$loop->last)
-                        <div class="mt-1 w-px flex-1 bg-white/[0.08] min-h-[28px]"></div>
+                        <div class="mt-1 w-px flex-1 bg-white/[0.08] min-h-[20px]"></div>
                         @endif
                     </div>
 
                     {{-- Content row --}}
-                    <div class="flex flex-1 flex-col gap-5 {{ !$loop->last ? 'pb-10' : '' }} md:flex-row md:gap-6">
-                        <div class="min-w-0 flex-1 pt-1.5">
-                            <h3 class="mb-3 text-[20px] font-[600] leading-snug text-white">{{ $stitle }}</h3>
-                            <ul class="space-y-2.5">
+                    <div class="flex flex-1 flex-col gap-4 {{ !$loop->last ? 'pb-6' : '' }} md:flex-row md:gap-5">
+                        <div class="min-w-0 flex-1 pt-1">
+                            <h3 class="mb-2 text-[17px] font-[600] leading-snug text-white">{{ $stitle }}</h3>
+                            <ul class="space-y-1.5">
                                 @foreach($bullets as [$bicon, $btext])
-                                <li class="flex items-center gap-3 text-[14px] text-white/60">
-                                    <i class="ti {{ $bicon }} shrink-0 text-[17px] text-[#3b82f6]"></i>
+                                <li class="flex items-center gap-2.5 text-[13px] text-white/60">
+                                    <i class="ti {{ $bicon }} shrink-0 text-[15px] text-[#3b82f6]"></i>
                                     {{ $btext }}
                                 </li>
                                 @endforeach
@@ -104,7 +103,7 @@ $sidebarNav = [
                         </div>
 
                         {{-- Mockup card --}}
-                        <div class="w-full md:w-60 shrink-0 self-start rounded-xl border border-white/[0.08] bg-[#162444] p-4">
+                        <div class="w-full md:w-52 shrink-0 self-start rounded-xl border border-white/[0.08] bg-[#162444] p-4">
                             @if($mtype === 'builder')
                             <p class="mb-2.5 text-[10px] font-semibold uppercase tracking-wider text-white/30">Exam Builder</p>
                             <div class="space-y-1.5">
@@ -173,12 +172,12 @@ $sidebarNav = [
         {{-- ════════════════════════════════════════════
              SECTION 2 — FEATURES
         ════════════════════════════════════════════ --}}
-        <section id="features" data-tour-section="features" class="mb-24 scroll-mt-24">
-            <p class="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Features</p>
-            <h2 class="tf-reveal mb-2 text-[2.2rem] font-[700] leading-[1.15] text-white">Everything you need to run fair exams</h2>
-            <p class="tf-reveal mb-12 text-[20px] text-[#3b82f6]" style="transition-delay:80ms">Built for educators, trusted by institutions.</p>
+        <section id="features" data-tour-section="features" class="mb-10 scroll-mt-20">
+            <p class="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Features</p>
+            <h2 class="tf-reveal mb-1 text-[1.9rem] font-[700] leading-[1.15] text-white">Everything you need to run fair exams</h2>
+            <p class="tf-reveal mb-4 text-[17px] text-[#3b82f6]" style="transition-delay:80ms">Built for educators, trusted by institutions.</p>
 
-            <div class="grid gap-4 sm:grid-cols-2">
+            <div class="grid gap-3 sm:grid-cols-2">
                 @foreach([
                     ['ti-video','Real-time monitoring','Live webcam feeds with automatic face detection during every exam session.'],
                     ['ti-alert-triangle','Violation detection','Tab switches, missing faces, and multiple faces are logged with precise timestamps.'],
@@ -189,14 +188,14 @@ $sidebarNav = [
                     ['ti-brush','Custom branding','Tailor exam appearance to match your institution\'s identity.'],
                     ['ti-code','API access','REST JSON API for LMS integrations and exam automation.'],
                 ] as $i => [$icon, $title, $desc])
-                <div class="tf-reveal flex items-start gap-4 rounded-xl border border-white/[0.07] bg-[#162444] p-5"
+                <div class="tf-reveal flex items-start gap-3 rounded-xl border border-white/[0.07] bg-[#162444] p-3.5"
                      style="transition-delay:{{ ($i % 4) * 60 }}ms">
-                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#3b82f6]/15">
-                        <i class="ti {{ $icon }} text-[#3b82f6] text-[20px]"></i>
+                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#3b82f6]/15">
+                        <i class="ti {{ $icon }} text-[#3b82f6] text-[16px]"></i>
                     </div>
                     <div>
-                        <p class="mb-1 text-[16px] font-[600] text-white">{{ $title }}</p>
-                        <p class="text-[13px] leading-[1.6] text-white/55">{{ $desc }}</p>
+                        <p class="mb-0.5 text-[13px] font-[600] text-white">{{ $title }}</p>
+                        <p class="text-[12px] leading-[1.5] text-white/55">{{ $desc }}</p>
                     </div>
                 </div>
                 @endforeach
@@ -206,30 +205,30 @@ $sidebarNav = [
         {{-- ════════════════════════════════════════════
              SECTION 3 — DEMO
         ════════════════════════════════════════════ --}}
-        <section id="demo" data-tour-section="demo" class="mb-24 scroll-mt-24">
-            <p class="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Demo</p>
-            <h2 class="tf-reveal mb-4 text-[2.2rem] font-[700] leading-[1.15] text-white">Experience ExamGuard firsthand</h2>
-            <p class="tf-reveal mb-8 text-[17px] leading-[1.7] text-white/60" style="transition-delay:80ms">
+        <section id="demo" data-tour-section="demo" class="mb-10 scroll-mt-20">
+            <p class="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Demo</p>
+            <h2 class="tf-reveal mb-1 text-[1.9rem] font-[700] leading-[1.15] text-white">Experience ExamGuard firsthand</h2>
+            <p class="tf-reveal mb-5 text-[14px] leading-[1.6] text-white/60" style="transition-delay:80ms">
                 Take an actual demo exam to see exactly what students experience — camera monitoring, timer countdown, and auto-grading on submission.
             </p>
-            <div class="tf-reveal flex flex-wrap items-center gap-4" style="transition-delay:160ms">
+            <div class="tf-reveal flex flex-wrap items-center gap-3 mb-6" style="transition-delay:160ms">
                 <a href="/login"
-                   class="inline-flex items-center gap-2.5 rounded-full bg-[#3b82f6] px-8 py-4 text-[16px] font-semibold text-white transition hover:brightness-110 hover:scale-[1.03]">
-                    <i class="ti ti-player-play text-[18px]"></i>
+                   class="inline-flex items-center gap-2 rounded-full bg-[#3b82f6] px-6 py-2.5 text-[14px] font-semibold text-white transition hover:brightness-110 hover:scale-[1.03]">
+                    <i class="ti ti-player-play text-[16px]"></i>
                     Start a demo exam
                 </a>
-                <span class="text-[14px] text-white/40">No account required for demo exams.</span>
+                <span class="text-[13px] text-white/40">No account required for demo exams.</span>
             </div>
-            <div class="mt-10 grid gap-4 sm:grid-cols-3">
+            <div class="grid gap-3 sm:grid-cols-3">
                 @foreach([
                     ['ti-eye','Camera active','Your webcam monitors for face presence and suspicious behavior throughout.'],
                     ['ti-clock','Timer running','A visible countdown keeps students on pace. Auto-submits on zero.'],
                     ['ti-check','Instant score','Results and your violation log appear the moment you submit.'],
                 ] as [$icon, $title, $desc])
-                <div class="tf-reveal flex flex-col gap-3 rounded-xl border border-white/[0.07] bg-[#162444] p-5">
-                    <i class="ti {{ $icon }} text-[#3b82f6] text-[24px]"></i>
-                    <p class="text-[15px] font-[600] text-white">{{ $title }}</p>
-                    <p class="text-[13px] leading-[1.6] text-white/55">{{ $desc }}</p>
+                <div class="tf-reveal flex flex-col gap-2 rounded-xl border border-white/[0.07] bg-[#162444] p-3.5">
+                    <i class="ti {{ $icon }} text-[#3b82f6] text-[20px]"></i>
+                    <p class="text-[13px] font-[600] text-white">{{ $title }}</p>
+                    <p class="text-[12px] leading-[1.5] text-white/55">{{ $desc }}</p>
                 </div>
                 @endforeach
             </div>
@@ -238,13 +237,13 @@ $sidebarNav = [
         {{-- ════════════════════════════════════════════
              SECTION 4 — CREATING EXAMS
         ════════════════════════════════════════════ --}}
-        <section id="creating-exams" data-tour-section="creating-exams" class="mb-24 scroll-mt-24">
-            <p class="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Step 01</p>
-            <h2 class="tf-reveal mb-2 text-[2.2rem] font-[700] leading-[1.15] text-white">Creating exams</h2>
-            <p class="tf-reveal mb-10 text-[20px] text-[#3b82f6]" style="transition-delay:80ms">Build any exam in minutes.</p>
+        <section id="creating-exams" data-tour-section="creating-exams" class="mb-10 scroll-mt-20">
+            <p class="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Exam Setup</p>
+            <h2 class="tf-reveal mb-1 text-[1.9rem] font-[700] leading-[1.15] text-white">Creating exams</h2>
+            <p class="tf-reveal mb-4 text-[17px] text-[#3b82f6]" style="transition-delay:80ms">Build any exam in minutes.</p>
 
-            <div class="flex flex-col gap-10 md:flex-row md:items-start md:gap-12">
-                <div class="flex-1 space-y-7">
+            <div class="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
+                <div class="flex-1 space-y-4">
                     @foreach([
                         ['ti-file-plus','Open the Exam Builder','Name your exam and choose the target class. The builder is instantly accessible from your professor dashboard.'],
                         ['ti-list','Add MCQ questions','Write each question, add up to 4 answer choices, and mark the correct answer. Drag to reorder at any time.'],
@@ -252,17 +251,17 @@ $sidebarNav = [
                         ['ti-settings','Set time limit and rules','Choose how long students have, whether to randomize question order, and how many attempts are allowed.'],
                     ] as $si => [$icon, $title, $desc])
                     <div class="tf-reveal flex gap-4" style="transition-delay:{{ $si * 70 }}ms">
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#3b82f6]/15 mt-0.5">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#3b82f6]/15 mt-0.5">
                             <i class="ti {{ $icon }} text-[#3b82f6] text-[17px]"></i>
                         </div>
                         <div>
-                            <p class="mb-1 text-[16px] font-[600] text-white">{{ $title }}</p>
-                            <p class="text-[14px] leading-[1.65] text-white/55">{{ $desc }}</p>
+                            <p class="mb-0.5 text-[14px] font-[600] text-white">{{ $title }}</p>
+                            <p class="text-[13px] leading-[1.55] text-white/55">{{ $desc }}</p>
                         </div>
                     </div>
                     @endforeach
                 </div>
-                <div class="w-full md:w-72 shrink-0 rounded-xl border border-white/[0.08] bg-[#162444] p-5">
+                <div class="w-full md:w-56 shrink-0 rounded-xl border border-white/[0.08] bg-[#162444] p-5">
                     <p class="mb-3 text-[10px] font-semibold uppercase tracking-wider text-white/30">Exam Builder</p>
                     <div class="mb-3 rounded-lg bg-white/[0.04] px-3 py-2.5">
                         <p class="text-[11px] text-white/35 mb-1">Exam title</p>
@@ -284,13 +283,13 @@ $sidebarNav = [
         {{-- ════════════════════════════════════════════
              SECTION 5 — GIVING EXAMS
         ════════════════════════════════════════════ --}}
-        <section id="giving-exams" data-tour-section="giving-exams" class="mb-24 scroll-mt-24">
-            <p class="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Step 02</p>
-            <h2 class="tf-reveal mb-2 text-[2.2rem] font-[700] leading-[1.15] text-white">Giving exams</h2>
-            <p class="tf-reveal mb-10 text-[20px] text-[#3b82f6]" style="transition-delay:80ms">Assign, schedule, and launch.</p>
+        <section id="giving-exams" data-tour-section="giving-exams" class="mb-10 scroll-mt-20">
+            <p class="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Distribution</p>
+            <h2 class="tf-reveal mb-1 text-[1.9rem] font-[700] leading-[1.15] text-white">Giving exams</h2>
+            <p class="tf-reveal mb-4 text-[17px] text-[#3b82f6]" style="transition-delay:80ms">Assign, schedule, and launch.</p>
 
-            <div class="flex flex-col gap-10 md:flex-row md:items-start md:gap-12">
-                <div class="flex-1 space-y-7">
+            <div class="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
+                <div class="flex-1 space-y-4">
                     @foreach([
                         ['ti-users','Assign to a class','Select one or more classes from your roster. All enrolled students will see the exam on their dashboard.'],
                         ['ti-link','Or share a direct link','Generate a shareable URL for open-access exams. Anyone with the link can take it.'],
@@ -298,17 +297,17 @@ $sidebarNav = [
                         ['ti-eye','Toggle proctoring','Enable ExamGuard Monitor with one click to activate live camera monitoring for all takers.'],
                     ] as $si => [$icon, $title, $desc])
                     <div class="tf-reveal flex gap-4" style="transition-delay:{{ $si * 70 }}ms">
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#3b82f6]/15 mt-0.5">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#3b82f6]/15 mt-0.5">
                             <i class="ti {{ $icon }} text-[#3b82f6] text-[17px]"></i>
                         </div>
                         <div>
-                            <p class="mb-1 text-[16px] font-[600] text-white">{{ $title }}</p>
-                            <p class="text-[14px] leading-[1.65] text-white/55">{{ $desc }}</p>
+                            <p class="mb-0.5 text-[14px] font-[600] text-white">{{ $title }}</p>
+                            <p class="text-[13px] leading-[1.55] text-white/55">{{ $desc }}</p>
                         </div>
                     </div>
                     @endforeach
                 </div>
-                <div class="w-full md:w-72 shrink-0 rounded-xl border border-white/[0.08] bg-[#162444] p-5">
+                <div class="w-full md:w-56 shrink-0 rounded-xl border border-white/[0.08] bg-[#162444] p-5">
                     <p class="mb-3 text-[10px] font-semibold uppercase tracking-wider text-white/30">Assign Exam</p>
                     @foreach([['CS101 — 14 students','Assigned','text-emerald-400'],['CS102 — 22 students','Assigned','text-emerald-400'],['CS103 — 8 students','Pending','text-white/30']] as [$cls,$st,$cls2])
                     <div class="mb-1.5 flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-2.5">
@@ -327,13 +326,13 @@ $sidebarNav = [
         {{-- ════════════════════════════════════════════
              SECTION 6 — TAKING EXAMS
         ════════════════════════════════════════════ --}}
-        <section id="taking-exams" data-tour-section="taking-exams" class="mb-24 scroll-mt-24">
-            <p class="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Step 03</p>
-            <h2 class="tf-reveal mb-2 text-[2.2rem] font-[700] leading-[1.15] text-white">Taking exams</h2>
-            <p class="tf-reveal mb-10 text-[20px] text-[#3b82f6]" style="transition-delay:80ms">The student experience — clean, focused, monitored.</p>
+        <section id="taking-exams" data-tour-section="taking-exams" class="mb-10 scroll-mt-20">
+            <p class="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Student Experience</p>
+            <h2 class="tf-reveal mb-1 text-[1.9rem] font-[700] leading-[1.15] text-white">Taking exams</h2>
+            <p class="tf-reveal mb-4 text-[17px] text-[#3b82f6]" style="transition-delay:80ms">The student experience — clean, focused, monitored.</p>
 
-            <div class="flex flex-col gap-10 md:flex-row md:items-start md:gap-12">
-                <div class="flex-1 space-y-7">
+            <div class="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
+                <div class="flex-1 space-y-4">
                     @foreach([
                         ['ti-camera','Grant webcam access','Students are prompted to allow camera access before the exam begins. No downloads required.'],
                         ['ti-writing','Answer questions','Clean MCQ interface — one question at a time or all at once depending on exam settings.'],
@@ -341,17 +340,17 @@ $sidebarNav = [
                         ['ti-check','Submit and receive score','Clicking submit finalizes the attempt. Scores and a violation summary are shown immediately.'],
                     ] as $si => [$icon, $title, $desc])
                     <div class="tf-reveal flex gap-4" style="transition-delay:{{ $si * 70 }}ms">
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#3b82f6]/15 mt-0.5">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#3b82f6]/15 mt-0.5">
                             <i class="ti {{ $icon }} text-[#3b82f6] text-[17px]"></i>
                         </div>
                         <div>
-                            <p class="mb-1 text-[16px] font-[600] text-white">{{ $title }}</p>
-                            <p class="text-[14px] leading-[1.65] text-white/55">{{ $desc }}</p>
+                            <p class="mb-0.5 text-[14px] font-[600] text-white">{{ $title }}</p>
+                            <p class="text-[13px] leading-[1.55] text-white/55">{{ $desc }}</p>
                         </div>
                     </div>
                     @endforeach
                 </div>
-                <div class="w-full md:w-72 shrink-0 rounded-xl border border-white/[0.08] bg-[#162444] p-5">
+                <div class="w-full md:w-56 shrink-0 rounded-xl border border-white/[0.08] bg-[#162444] p-5">
                     <div class="mb-3 flex items-center justify-between">
                         <p class="text-[10px] font-semibold uppercase tracking-wider text-white/30">Student Exam View</p>
                         <span class="text-[11px] font-semibold text-amber-400">28:42</span>
@@ -372,13 +371,13 @@ $sidebarNav = [
         {{-- ════════════════════════════════════════════
              SECTION 7 — EXAM RESULTS
         ════════════════════════════════════════════ --}}
-        <section id="exam-results" data-tour-section="exam-results" class="mb-24 scroll-mt-24">
-            <p class="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Step 04</p>
-            <h2 class="tf-reveal mb-2 text-[2.2rem] font-[700] leading-[1.15] text-white">Exam results</h2>
-            <p class="tf-reveal mb-10 text-[20px] text-[#3b82f6]" style="transition-delay:80ms">Instant grading, no manual work.</p>
+        <section id="exam-results" data-tour-section="exam-results" class="mb-10 scroll-mt-20">
+            <p class="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Analytics</p>
+            <h2 class="tf-reveal mb-1 text-[1.9rem] font-[700] leading-[1.15] text-white">Exam results</h2>
+            <p class="tf-reveal mb-4 text-[17px] text-[#3b82f6]" style="transition-delay:80ms">Instant grading, no manual work.</p>
 
-            <div class="flex flex-col gap-10 md:flex-row md:items-start md:gap-12">
-                <div class="flex-1 space-y-7">
+            <div class="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
+                <div class="flex-1 space-y-4">
                     @foreach([
                         ['ti-calculator','Automatic scoring','Scores are calculated the moment a student submits — no professor action needed.'],
                         ['ti-chart-bar','Class-wide analytics','View score distribution, average, highest, and lowest across all students.'],
@@ -386,17 +385,17 @@ $sidebarNav = [
                         ['ti-download','Export results','Download a CSV of all student scores and attempt data for record-keeping.'],
                     ] as $si => [$icon, $title, $desc])
                     <div class="tf-reveal flex gap-4" style="transition-delay:{{ $si * 70 }}ms">
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#3b82f6]/15 mt-0.5">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#3b82f6]/15 mt-0.5">
                             <i class="ti {{ $icon }} text-[#3b82f6] text-[17px]"></i>
                         </div>
                         <div>
-                            <p class="mb-1 text-[16px] font-[600] text-white">{{ $title }}</p>
-                            <p class="text-[14px] leading-[1.65] text-white/55">{{ $desc }}</p>
+                            <p class="mb-0.5 text-[14px] font-[600] text-white">{{ $title }}</p>
+                            <p class="text-[13px] leading-[1.55] text-white/55">{{ $desc }}</p>
                         </div>
                     </div>
                     @endforeach
                 </div>
-                <div class="w-full md:w-72 shrink-0 rounded-xl border border-white/[0.08] bg-[#162444] p-5">
+                <div class="w-full md:w-56 shrink-0 rounded-xl border border-white/[0.08] bg-[#162444] p-5">
                     <p class="mb-3 text-[10px] font-semibold uppercase tracking-wider text-white/30">Results — CS101</p>
                     <div class="mb-1 grid grid-cols-3 gap-2">
                         @foreach([['Avg','82%','text-[#3b82f6]'],['High','97%','text-emerald-400'],['Low','61%','text-amber-400']] as [$lbl,$val,$col])
@@ -421,13 +420,13 @@ $sidebarNav = [
         {{-- ════════════════════════════════════════════
              SECTION 8 — VIOLATIONS
         ════════════════════════════════════════════ --}}
-        <section id="violations" data-tour-section="violations" class="mb-24 scroll-mt-24">
-            <p class="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Step 05</p>
-            <h2 class="tf-reveal mb-2 text-[2.2rem] font-[700] leading-[1.15] text-white">Violations and incident logs</h2>
-            <p class="tf-reveal mb-10 text-[20px] text-[#3b82f6]" style="transition-delay:80ms">Every suspicious event, captured and timestamped.</p>
+        <section id="violations" data-tour-section="violations" class="mb-10 scroll-mt-20">
+            <p class="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Integrity</p>
+            <h2 class="tf-reveal mb-1 text-[1.9rem] font-[700] leading-[1.15] text-white">Violations and incident logs</h2>
+            <p class="tf-reveal mb-4 text-[17px] text-[#3b82f6]" style="transition-delay:80ms">Every suspicious event, captured and timestamped.</p>
 
-            <div class="flex flex-col gap-10 md:flex-row md:items-start md:gap-12">
-                <div class="flex-1 space-y-7">
+            <div class="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
+                <div class="flex-1 space-y-4">
                     @foreach([
                         ['ti-eye-off','No face detected','A violation is logged if no face is detected for more than 6 consecutive seconds.'],
                         ['ti-users','Multiple faces','If more than one face appears in frame, an incident is immediately recorded.'],
@@ -435,17 +434,17 @@ $sidebarNav = [
                         ['ti-list-details','Complete incident timeline','Professors see a full timestamped log for each student — sorted, filterable, and exportable.'],
                     ] as $si => [$icon, $title, $desc])
                     <div class="tf-reveal flex gap-4" style="transition-delay:{{ $si * 70 }}ms">
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#3b82f6]/15 mt-0.5">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#3b82f6]/15 mt-0.5">
                             <i class="ti {{ $icon }} text-[#3b82f6] text-[17px]"></i>
                         </div>
                         <div>
-                            <p class="mb-1 text-[16px] font-[600] text-white">{{ $title }}</p>
-                            <p class="text-[14px] leading-[1.65] text-white/55">{{ $desc }}</p>
+                            <p class="mb-0.5 text-[14px] font-[600] text-white">{{ $title }}</p>
+                            <p class="text-[13px] leading-[1.55] text-white/55">{{ $desc }}</p>
                         </div>
                     </div>
                     @endforeach
                 </div>
-                <div class="w-full md:w-72 shrink-0 rounded-xl border border-white/[0.08] bg-[#162444] p-5">
+                <div class="w-full md:w-56 shrink-0 rounded-xl border border-white/[0.08] bg-[#162444] p-5">
                     <p class="mb-3 text-[10px] font-semibold uppercase tracking-wider text-white/30">Violation Log — Ben T.</p>
                     <div class="space-y-1.5">
                         @foreach([['14:32:07','No face detected (8 s)','text-red-400'],['14:31:44','Tab switch detected','text-amber-400'],['14:28:02','Multiple faces (3 s)','text-red-400'],['14:20:00','Session started','text-white/35']] as [$ts,$ev,$col])
@@ -466,13 +465,13 @@ $sidebarNav = [
         {{-- ════════════════════════════════════════════
              SECTION 9 — CERTIFICATES
         ════════════════════════════════════════════ --}}
-        <section id="certificates" data-tour-section="certificates" class="mb-24 scroll-mt-24">
-            <p class="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Step 06</p>
-            <h2 class="tf-reveal mb-2 text-[2.2rem] font-[700] leading-[1.15] text-white">Certificates</h2>
-            <p class="tf-reveal mb-10 text-[20px] text-[#3b82f6]" style="transition-delay:80ms">Reward achievement automatically.</p>
+        <section id="certificates" data-tour-section="certificates" class="mb-10 scroll-mt-20">
+            <p class="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Achievement</p>
+            <h2 class="tf-reveal mb-1 text-[1.9rem] font-[700] leading-[1.15] text-white">Certificates</h2>
+            <p class="tf-reveal mb-4 text-[17px] text-[#3b82f6]" style="transition-delay:80ms">Reward achievement automatically.</p>
 
-            <div class="flex flex-col gap-10 md:flex-row md:items-start md:gap-12">
-                <div class="flex-1 space-y-7">
+            <div class="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
+                <div class="flex-1 space-y-4">
                     @foreach([
                         ['ti-settings','Set a pass-mark threshold','Define the minimum score required for a certificate. Each exam can have its own threshold.'],
                         ['ti-award','Auto-issued on passing','When a student\'s score meets the threshold, a certificate is generated and attached to their result.'],
@@ -480,17 +479,17 @@ $sidebarNav = [
                         ['ti-id','Custom certificate design','Include your institution name, the exam title, date, and student name on every certificate.'],
                     ] as $si => [$icon, $title, $desc])
                     <div class="tf-reveal flex gap-4" style="transition-delay:{{ $si * 70 }}ms">
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#3b82f6]/15 mt-0.5">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#3b82f6]/15 mt-0.5">
                             <i class="ti {{ $icon }} text-[#3b82f6] text-[17px]"></i>
                         </div>
                         <div>
-                            <p class="mb-1 text-[16px] font-[600] text-white">{{ $title }}</p>
-                            <p class="text-[14px] leading-[1.65] text-white/55">{{ $desc }}</p>
+                            <p class="mb-0.5 text-[14px] font-[600] text-white">{{ $title }}</p>
+                            <p class="text-[13px] leading-[1.55] text-white/55">{{ $desc }}</p>
                         </div>
                     </div>
                     @endforeach
                 </div>
-                <div class="w-full md:w-72 shrink-0 rounded-xl border border-white/[0.08] bg-[#162444] p-5">
+                <div class="w-full md:w-56 shrink-0 rounded-xl border border-white/[0.08] bg-[#162444] p-5">
                     <div class="rounded-lg border border-[#3b82f6]/20 bg-[#0f1e3d] p-4 text-center">
                         <i class="ti ti-award text-[#3b82f6] text-[32px] block mb-2"></i>
                         <p class="text-[10px] uppercase tracking-wider text-white/30 mb-1">Certificate of Completion</p>
@@ -508,13 +507,13 @@ $sidebarNav = [
         {{-- ════════════════════════════════════════════
              SECTION 10 — EXAMGUARD MONITOR
         ════════════════════════════════════════════ --}}
-        <section id="monitoring" data-tour-section="monitoring" class="mb-24 scroll-mt-24">
-            <p class="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Proctoring</p>
-            <h2 class="tf-reveal mb-2 text-[2.2rem] font-[700] leading-[1.15] text-white">ExamGuard Monitor — AI proctoring built in</h2>
-            <p class="tf-reveal mb-10 text-[20px] text-[#3b82f6]" style="transition-delay:80ms">No downloads. No installs. One click to enable.</p>
+        <section id="monitoring" data-tour-section="monitoring" class="mb-10 scroll-mt-20">
+            <p class="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Proctoring</p>
+            <h2 class="tf-reveal mb-1 text-[1.9rem] font-[700] leading-[1.15] text-white">ExamGuard Monitor — AI proctoring built in</h2>
+            <p class="tf-reveal mb-4 text-[17px] text-[#3b82f6]" style="transition-delay:80ms">No downloads. No installs. One click to enable.</p>
 
-            <div class="flex flex-col gap-10 md:flex-row md:items-start md:gap-12">
-                <div class="flex-1 space-y-7">
+            <div class="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
+                <div class="flex-1 space-y-4">
                     @foreach([
                         ['ti-brand-google','Powered by MediaPipe','Uses Google\'s MediaPipe Face Landmarker to detect presence and count faces in-browser.'],
                         ['ti-eye','Camera feed analysis','The student\'s webcam is analyzed locally — the feed is never recorded or sent to the server.'],
@@ -522,17 +521,17 @@ $sidebarNav = [
                         ['ti-browser-off','Tab switch detection','Any attempt to switch tabs or minimize the browser is logged as a violation immediately.'],
                     ] as $si => [$icon, $title, $desc])
                     <div class="tf-reveal flex gap-4" style="transition-delay:{{ $si * 70 }}ms">
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#3b82f6]/15 mt-0.5">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#3b82f6]/15 mt-0.5">
                             <i class="ti {{ $icon }} text-[#3b82f6] text-[17px]"></i>
                         </div>
                         <div>
-                            <p class="mb-1 text-[16px] font-[600] text-white">{{ $title }}</p>
-                            <p class="text-[14px] leading-[1.65] text-white/55">{{ $desc }}</p>
+                            <p class="mb-0.5 text-[14px] font-[600] text-white">{{ $title }}</p>
+                            <p class="text-[13px] leading-[1.55] text-white/55">{{ $desc }}</p>
                         </div>
                     </div>
                     @endforeach
                 </div>
-                <div class="w-full md:w-72 shrink-0 rounded-xl border border-white/[0.08] bg-[#0d1b33] p-5">
+                <div class="w-full md:w-56 shrink-0 rounded-xl border border-white/[0.08] bg-[#0d1b33] p-5">
                     <div class="mb-3 flex items-center justify-between">
                         <p class="text-[10px] font-semibold uppercase tracking-wider text-white/30">Live Session</p>
                         <span class="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-400"><span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Active</span>
@@ -558,13 +557,13 @@ $sidebarNav = [
         {{-- ════════════════════════════════════════════
              SECTION 11 — API
         ════════════════════════════════════════════ --}}
-        <section id="api" data-tour-section="api" class="mb-24 scroll-mt-24">
-            <p class="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Developers</p>
-            <h2 class="tf-reveal mb-2 text-[2.2rem] font-[700] leading-[1.15] text-white">ExamGuard API</h2>
-            <p class="tf-reveal mb-10 text-[20px] text-[#3b82f6]" style="transition-delay:80ms">Integrate ExamGuard into your existing LMS.</p>
+        <section id="api" data-tour-section="api" class="mb-10 scroll-mt-20">
+            <p class="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Developers</p>
+            <h2 class="tf-reveal mb-1 text-[1.9rem] font-[700] leading-[1.15] text-white">ExamGuard API</h2>
+            <p class="tf-reveal mb-4 text-[17px] text-[#3b82f6]" style="transition-delay:80ms">Integrate ExamGuard into your existing LMS.</p>
 
-            <div class="flex flex-col gap-10 md:flex-row md:items-start md:gap-12">
-                <div class="flex-1 space-y-7">
+            <div class="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
+                <div class="flex-1 space-y-4">
                     @foreach([
                         ['ti-key','REST JSON API','All core platform features are exposed via a clean REST API with JSON responses.'],
                         ['ti-webhook','Webhooks','Subscribe to exam completion and violation events and receive real-time POST callbacks.'],
@@ -572,17 +571,17 @@ $sidebarNav = [
                         ['ti-file-code','Full documentation','Comprehensive endpoint reference, code samples, and a Postman collection available on request.'],
                     ] as $si => [$icon, $title, $desc])
                     <div class="tf-reveal flex gap-4" style="transition-delay:{{ $si * 70 }}ms">
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#3b82f6]/15 mt-0.5">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#3b82f6]/15 mt-0.5">
                             <i class="ti {{ $icon }} text-[#3b82f6] text-[17px]"></i>
                         </div>
                         <div>
-                            <p class="mb-1 text-[16px] font-[600] text-white">{{ $title }}</p>
-                            <p class="text-[14px] leading-[1.65] text-white/55">{{ $desc }}</p>
+                            <p class="mb-0.5 text-[14px] font-[600] text-white">{{ $title }}</p>
+                            <p class="text-[13px] leading-[1.55] text-white/55">{{ $desc }}</p>
                         </div>
                     </div>
                     @endforeach
                 </div>
-                <div class="w-full md:w-72 shrink-0 rounded-xl border border-white/[0.08] bg-[#162444] p-5">
+                <div class="w-full md:w-56 shrink-0 rounded-xl border border-white/[0.08] bg-[#162444] p-5">
                     <p class="mb-3 text-[10px] font-semibold uppercase tracking-wider text-white/30">API Request</p>
                     <div class="rounded-lg bg-[#0a1628] p-3 font-mono text-[11px] leading-[1.7]">
                         <span class="text-sky-400">GET</span> <span class="text-white/70">/api/v1/exams</span><br>
@@ -603,28 +602,29 @@ $sidebarNav = [
         {{-- ════════════════════════════════════════════
              SECTION 12 — CUSTOMERS
         ════════════════════════════════════════════ --}}
-        <section id="customers" data-tour-section="customers" class="mb-12 scroll-mt-24">
-            <p class="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Community</p>
-            <h2 class="tf-reveal mb-2 text-[2.2rem] font-[700] leading-[1.15] text-white">Trusted by educators worldwide</h2>
-            <p class="tf-reveal mb-12 text-[20px] text-[#3b82f6]" style="transition-delay:80ms">Join thousands of professors already using ExamGuard.</p>
+        <section id="customers" data-tour-section="customers" class="mb-10 scroll-mt-20">
+            <p class="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#3b82f6]">Community</p>
+            <h2 class="tf-reveal mb-1 text-[1.9rem] font-[700] leading-[1.15] text-white">Trusted by educators worldwide</h2>
+            <p class="tf-reveal mb-4 text-[17px] text-[#3b82f6]" style="transition-delay:80ms">Join thousands of professors already using ExamGuard.</p>
 
-            <div class="tf-reveal mb-12 grid grid-cols-2 gap-6 text-center md:grid-cols-4" style="transition-delay:80ms">
+            <div class="tf-reveal mb-6 grid grid-cols-2 gap-3 text-center md:grid-cols-4" style="transition-delay:80ms">
                 @foreach([['12k+','Students monitored'],['50+','Institutions'],['99%','Detection accuracy'],['3+','Years in service']] as [$n,$l])
-                <div class="rounded-xl border border-white/[0.07] bg-[#162444] p-5">
-                    <p class="text-[2.2rem] font-[800] leading-none text-[#3b82f6]">{{ $n }}</p>
-                    <p class="mt-2 text-[13px] text-white/50">{{ $l }}</p>
+                <div class="rounded-xl border border-white/[0.07] bg-[#162444] px-3 py-4">
+                    <p class="text-[1.7rem] font-[800] leading-none text-[#3b82f6]">{{ $n }}</p>
+                    <p class="mt-1.5 text-[12px] text-white/50">{{ $l }}</p>
                 </div>
                 @endforeach
             </div>
 
-            <div class="tf-reveal flex flex-wrap items-center gap-x-10 gap-y-4" style="transition-delay:160ms">
+            <div class="tf-reveal flex flex-wrap items-center gap-x-7 gap-y-3" style="transition-delay:160ms">
                 @foreach(['Universitas Teknologi','Mapúa MCL','AMA University','FEU Institute','DLSU Manila','NU Philippines','PUP Manila'] as $name)
-                <span class="text-[14px] font-semibold tracking-wide text-white/30">{{ $name }}</span>
+                <span class="text-[13px] font-semibold tracking-wide text-white/30">{{ $name }}</span>
                 @endforeach
             </div>
         </section>
 
     </main>
+</div>
 </div>
 
 @include('partials.marketing-footer')

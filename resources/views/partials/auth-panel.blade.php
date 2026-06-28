@@ -8,8 +8,8 @@
     {{-- ── Top bar ── --}}
     <div class="flex shrink-0 items-center justify-between px-8 pt-7 pb-0">
         <a href="/" class="flex items-center gap-2">
-            <img src="/images/logo.png" alt="ExamGuard" class="h-7 w-7 drop-shadow">
-            <span style="font-size:16px; font-weight:600; color:#fff; letter-spacing:-0.3px;">ExamGuard</span>
+            <img src="/images/logo.png" alt="examguard" class="h-9 w-auto object-contain drop-shadow">
+            <span style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:600; color:#fff; letter-spacing:-0.4px;">examguard.</span>
         </a>
         <a href="/" class="auth-back-link flex items-center gap-1" style="font-size:13px; color:rgba(255,255,255,0.45);">
             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -189,9 +189,9 @@
                             </div>
                             {{-- Logo --}}
                             <div class="flex justify-center mb-2">
-                                <img src="/images/logo.png" alt="ExamGuard" class="drop-shadow" style="height:26px; width:26px; opacity:0.65;">
+                                <img src="/images/logo.png" alt="examguard" class="drop-shadow" style="height:26px; width:auto; opacity:0.65;">
                             </div>
-                            <p style="font-size:8px; letter-spacing:3px; color:rgba(255,255,255,0.22); text-transform:uppercase; margin-bottom:6px;">ExamGuard</p>
+                            <p style="font-size:8px; letter-spacing:3px; color:rgba(255,255,255,0.22); text-transform:uppercase; margin-bottom:6px;">examguard</p>
                             <p style="font-size:15px; font-weight:600; color:rgba(255,255,255,0.85); margin-bottom:6px;">Certificate of Completion</p>
                             <p style="font-size:10px; color:rgba(255,255,255,0.32); margin-bottom:8px;">This certifies that</p>
                             <p style="font-size:14px; font-weight:500; color:rgba(255,255,255,0.70); font-style:italic; margin-bottom:8px;">Juan dela Cruz</p>
@@ -250,7 +250,7 @@
     </div>
 
     {{-- Copyright --}}
-    <p class="shrink-0 px-8 pb-6" style="font-size:11px; color:rgba(255,255,255,0.28);">© {{ date('Y') }} ExamGuard</p>
+    <p class="shrink-0 px-8 pb-6" style="font-size:11px; color:rgba(255,255,255,0.28);">© {{ date('Y') }} examguard</p>
 
 </div>
 

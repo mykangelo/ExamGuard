@@ -1,13 +1,63 @@
-const activeExamId = new URLSearchParams(location.search).get("examId");
+const activeExamId = window.ExamGuardRoute?.resolveTakeExamId?.()
+  || new URLSearchParams(location.search).get('examId');
 let activeExam = null;
+let activeAttempt = null;
 let secondsRemaining = 0;
 let examFinished = false;
+let heartbeatTimer = null;
 const startedAt = new Date().toISOString();
 
 function blockExam(message) {
   document.getElementById("activeExamTitle").textContent = "Exam unavailable";
   document.getElementById("activeExamInstructions").textContent = message;
   document.getElementById("submitExamBtn").disabled = true;
+}
+
+async function startSession() {
+  try {
+    const { attempt } = await ExamGuardApi.startExamSession(activeExamId);
+    activeAttempt = attempt;
+
+    if (attempt.startedAt) {
+      const elapsed = Math.floor((Date.now() - new Date(attempt.startedAt).getTime()) / 1000);
+      secondsRemaining = Math.max(0, (activeExam.timeLimit * 60) - elapsed);
+    }
+
+    window.ExamGuardSession = {
+      examId: activeExamId,
+      attemptId: attempt.id,
+      async reportViolation(payload) {
+        if (!activeAttempt?.id || examFinished) return;
+        try {
+          await ExamGuardApi.reportViolation(activeExamId, activeAttempt.id, {
+            type: payload.type,
+            severity: payload.severity,
+            message: payload.message,
+            snapshot: payload.snapshot || null,
+            occurredAt: payload.occurredAt,
+          });
+        } catch (_) {}
+      },
+    };
+
+    const warningEl = document.getElementById("warningCount");
+    if (warningEl && attempt.warningCount) {
+      warningEl.textContent = String(attempt.warningCount);
+    }
+    document.dispatchEvent(new CustomEvent("examguard:session-started", {
+      detail: { warningCount: attempt.warningCount || 0 },
+    }));
+
+    heartbeatTimer = setInterval(async () => {
+      if (examFinished || !activeAttempt?.id) return;
+      try {
+        await ExamGuardApi.examHeartbeat(activeExamId, activeAttempt.id);
+      } catch (_) {}
+    }, 20000);
+  } catch (error) {
+    blockExam(error.message);
+    throw error;
+  }
 }
 
 async function renderExam() {
@@ -47,6 +97,12 @@ async function renderExam() {
     container.append(card);
   });
 
+  try {
+    await startSession();
+  } catch (_) {
+    return;
+  }
+
   updateTimer();
   setInterval(() => {
     if (examFinished) return;
@@ -71,15 +127,19 @@ async function finishExam(autoSubmitted = false) {
   if (!autoSubmitted && answers.includes(null) && !confirm("Some questions are unanswered. Submit anyway?")) return;
 
   examFinished = true;
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  window.ExamGuardSession = null;
+
   try {
     const { attempt } = await ExamGuardApi.submitExam(activeExamId, {
       answers,
       warningCount: Number(document.getElementById("warningCount").textContent) || 0,
-      startedAt,
+      startedAt: activeAttempt?.startedAt || startedAt,
     });
     document.getElementById("sessionStatus").textContent = "Submitted";
     document.getElementById("submitExamBtn").disabled = true;
     alert(`${autoSubmitted ? "Session ended. " : ""}Exam submitted. Score: ${attempt.score}/${attempt.total}`);
+    window.ExamGuardRoute?.clearTakeExamId?.();
     location.href = "/student#classes";
   } catch (error) {
     examFinished = false;

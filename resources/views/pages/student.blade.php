@@ -58,6 +58,21 @@ data-role="student"
         </form>
     </section>
 
+    <section class="eg-panel" id="exam-key">
+        <div class="mb-6">
+            <div class="text-sm font-semibold uppercase tracking-[0.2em] text-sky-300">Exam access</div>
+            <h2 class="text-2xl font-bold">Enter an exam key</h2>
+            <p class="mt-2 text-slate-300">Your professor will share an 8-character key when an exam is published.</p>
+        </div>
+        <form id="joinExamForm" class="flex flex-wrap items-end gap-3">
+            <div class="min-w-[200px] flex-1">
+                <label for="examKeyInput" class="mb-2 block text-sm text-slate-300">Exam key</label>
+                <input id="examKeyInput" class="eg-input font-mono uppercase tracking-widest" placeholder="XXXXXXXX" maxlength="8" autocomplete="off">
+            </div>
+            <button class="eg-btn-primary" type="submit">Start exam</button>
+        </form>
+    </section>
+
     <section class="eg-panel">
         <div class="mb-6 flex items-center justify-between">
             <h2 class="text-2xl font-bold">Available Exams</h2>
@@ -73,7 +88,7 @@ data-role="student"
 @endsection
 
 @push('scripts')
-<script src="/js/api-client.js"></script>
+<script src="/js/api-client.js?v=7"></script>
 <script src="/js/auth-guard.js"></script>
-<script src="/js/student.js"></script>
+<script src="/js/student.js?v=3"></script>
 @endpush

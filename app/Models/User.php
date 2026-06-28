@@ -4,20 +4,40 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'role'];
+    protected $fillable = ['name', 'email', 'password', 'role', 'preferences'];
 
     protected $hidden = ['password', 'remember_token'];
 
     protected function casts(): array
     {
-        return ['password' => 'hashed'];
+        return [
+            'password' => 'hashed',
+            'preferences' => 'array',
+        ];
+    }
+
+    public static function defaultPreferences(): array
+    {
+        return [
+            'emailExamSubmitted'   => true,
+            'emailViolations'      => true,
+            'defaultWarningLimit'  => 3,
+            'defaultTimeLimit'     => 60,
+            'readNotificationIds'  => [],
+        ];
+    }
+
+    public function preferencesWithDefaults(): array
+    {
+        return array_merge(static::defaultPreferences(), $this->preferences ?? []);
     }
 
     public function classrooms(): HasMany
@@ -43,10 +63,13 @@ class User extends Authenticatable
     public function toAuthArray(): array
     {
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'email' => $this->email,
-            'role' => $this->role,
+            'id'           => $this->id,
+            'name'         => $this->name,
+            'email'        => $this->email,
+            'role'         => $this->role,
+            'verified'     => $this->hasVerifiedEmail(),
+            'member_since' => $this->created_at?->format('M j, Y'),
+            'preferences'  => $this->preferencesWithDefaults(),
         ];
     }
 }

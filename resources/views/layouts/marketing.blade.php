@@ -7,7 +7,7 @@
     <title>@yield('title', 'ExamGuard')</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Lora:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css'])
     @stack('head')
     <style>
@@ -20,12 +20,12 @@
 
         /* Display / editorial serif for hero headlines */
         .mkt-display {
-            font-family: 'DM Serif Display', Georgia, serif;
+            font-family: 'Lora', Georgia, serif;
         }
 
         /* Sans for UI and body */
         h1, h2, h3, h4, h5, h6 {
-            font-family: 'DM Sans', Inter, ui-sans-serif, sans-serif;
+            font-family: 'Plus Jakarta Sans', ui-sans-serif, sans-serif;
         }
 
         /* Anchor offset: single-bar header is ~72px */
@@ -34,6 +34,7 @@
 </head>
 <body class="antialiased">
     @yield('content')
+    <script src="/js/route-state.js?v=2"></script>
     @stack('scripts')
 </body>
 </html>
