@@ -6,11 +6,10 @@
 | Field | Value |
 |-------|--------|
 | **Project Title** | ExamGuard — Online Examination & Proctoring Platform |
-| **Group / Team Name** | *(fill in)* |
-| **Date** | *(fill in)* |
-| **Section** | *(fill in)* |
-| **Semester / S.Y.** | *(fill in)* |
-| **Evaluator / Panelist** | *(fill in)* |
+| **Group**| *Group 4* |
+| **Date** | *June 30, 2026* |
+| **CYS** | *BSCPE 3-7* |
+| **Semester / S.Y.** | *2nd Sem 2025-2026* |
 
 **Related files:** [README.md](README.md) · [DOCUMENTATION.md](DOCUMENTATION.md) · [INFINITYFREE.md](INFINITYFREE.md)
 
