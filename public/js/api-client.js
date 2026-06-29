@@ -35,6 +35,8 @@
           const err = new Error(message);
           err.errors = result.errors && typeof result.errors === 'object' ? result.errors : null;
           err.status = response.status;
+          err.code = result.code || null;
+          err.exam = result.exam || null;
           err.needs_verification  = result.needs_verification  || false;
           err.email               = result.email               || null;
           err.locked_out          = result.locked_out          || false;
@@ -42,6 +44,31 @@
           err.attempts_remaining  = result.attempts_remaining  ?? null;
           throw err;
         }
+    return result;
+  }
+
+  async function uploadRequest(path, formData) {
+    const response = await fetch(path, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': csrfToken(),
+      },
+      body: formData,
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      let message = sanitizeErrorMessage(result.error || result.message || 'Upload failed.');
+      if (result.errors && typeof result.errors === 'object') {
+        const firstError = Object.values(result.errors).flat()[0];
+        if (firstError) message = sanitizeErrorMessage(firstError);
+      }
+      const err = new Error(message);
+      err.errors = result.errors && typeof result.errors === 'object' ? result.errors : null;
+      throw err;
+    }
     return result;
   }
 
@@ -59,6 +86,14 @@
       request("/api/auth/password", { method: "PUT", body: JSON.stringify(payload) }),
     updatePreferences: (payload) =>
       request("/api/auth/preferences", { method: "PUT", body: JSON.stringify(payload) }),
+    uploadAvatar: (file) => {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      return uploadRequest('/api/auth/avatar', formData);
+    },
+    logoutAllSessions: () => request('/api/auth/logout-all', { method: 'POST' }),
+    deleteAccount: (password) =>
+      request('/api/auth/account', { method: 'DELETE', body: JSON.stringify({ password }) }),
     classes: () => request("/api/classes"),
     professorClasses: () => request("/api/professor/classes"),
     createClass: (name, subject) =>
@@ -96,5 +131,8 @@
     notifications: () => request("/api/professor/notifications"),
     markNotificationsRead: (payload) =>
       request("/api/professor/notifications/read", { method: "PUT", body: JSON.stringify(payload) }),
+    studentNotifications: () => request("/api/student/notifications"),
+    markStudentNotificationsRead: (payload) =>
+      request("/api/student/notifications/read", { method: "PUT", body: JSON.stringify(payload) }),
   };
 })();

@@ -7,8 +7,10 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -118,13 +120,22 @@ class AuthController extends Controller
         $user = $request->user();
 
         $input = $request->validate([
-            'name'  => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'name'       => ['required', 'string', 'max:255'],
+            'email'      => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'department' => ['nullable', 'string', 'max:120'],
+            'yearLevel'  => ['nullable', 'string', 'max:40'],
+            'studentId'  => ['nullable', 'string', 'max:40'],
         ]);
 
         $emailChanged = strcasecmp($user->email, $input['email']) !== 0;
         $user->name = $input['name'];
         $user->email = $input['email'];
+
+        $prefs = $user->preferencesWithDefaults();
+        $prefs['department'] = trim($input['department'] ?? '') ?: '';
+        $prefs['yearLevel'] = trim($input['yearLevel'] ?? '') ?: '';
+        $prefs['studentId'] = trim($input['studentId'] ?? '') ?: '';
+        $user->preferences = $prefs;
 
         if ($emailChanged) {
             $user->email_verified_at = null;
@@ -168,6 +179,10 @@ class AuthController extends Controller
         $input = $request->validate([
             'emailExamSubmitted'  => ['sometimes', 'boolean'],
             'emailViolations'     => ['sometimes', 'boolean'],
+            'emailExamAssigned'   => ['sometimes', 'boolean'],
+            'emailClassUpdates'   => ['sometimes', 'boolean'],
+            'emailExamReminder'   => ['sometimes', 'boolean'],
+            'emailExamResults'    => ['sometimes', 'boolean'],
             'defaultWarningLimit' => ['sometimes', 'integer', 'in:3,5'],
             'defaultTimeLimit'    => ['sometimes', 'nullable', 'integer', 'min:1', 'max:480'],
         ]);
@@ -177,5 +192,68 @@ class AuthController extends Controller
         $user->save();
 
         return response()->json(['user' => $user->toAuthArray()]);
+    }
+
+    public function uploadAvatar(Request $request): JsonResponse
+    {
+        $input = $request->validate([
+            'avatar' => ['required', 'image', 'max:2048'],
+        ]);
+
+        $user = $request->user();
+
+        if ($user->avatar_path) {
+            Storage::disk('public')->delete($user->avatar_path);
+        }
+
+        $path = $input['avatar']->store('avatars/'.$user->id, 'public');
+        $user->avatar_path = $path;
+        $user->save();
+
+        return response()->json(['user' => $user->toAuthArray()]);
+    }
+
+    public function logoutAllSessions(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (config('session.driver') === 'database') {
+            DB::table(config('session.table', 'sessions'))
+                ->where('user_id', $user->id)
+                ->delete();
+        }
+
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function destroyAccount(Request $request): JsonResponse
+    {
+        $input = $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($input['password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['Password is incorrect.'],
+            ]);
+        }
+
+        if ($user->avatar_path) {
+            Storage::disk('public')->delete($user->avatar_path);
+        }
+
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        $user->delete();
+
+        return response()->json(['ok' => true]);
     }
 }

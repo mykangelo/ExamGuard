@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClassroomController;
 use App\Http\Controllers\Api\ExamController;
 use App\Http\Controllers\Api\ProfessorController;
+use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\PageController;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +42,9 @@ Route::middleware('auth')->group(function () {
     Route::put('/api/auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('/api/auth/password', [AuthController::class, 'updatePassword']);
     Route::put('/api/auth/preferences', [AuthController::class, 'updatePreferences']);
+    Route::post('/api/auth/avatar', [AuthController::class, 'uploadAvatar']);
+    Route::post('/api/auth/logout-all', [AuthController::class, 'logoutAllSessions']);
+    Route::delete('/api/auth/account', [AuthController::class, 'destroyAccount']);
 
     Route::get('/api/classes', [ClassroomController::class, 'index']);
     Route::post('/api/classes', [ClassroomController::class, 'store']);
@@ -69,6 +73,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/professor/attempts/{attempt}/violations', [ProctoringController::class, 'attemptViolations'])->middleware('role:professor');
     Route::get('/api/professor/notifications', [ProfessorController::class, 'notifications'])->middleware('role:professor');
     Route::put('/api/professor/notifications/read', [ProfessorController::class, 'markNotificationsRead'])->middleware('role:professor');
+
+    Route::get('/api/student/notifications', [StudentController::class, 'notifications'])->middleware('role:student');
+    Route::put('/api/student/notifications/read', [StudentController::class, 'markNotificationsRead'])->middleware('role:student');
 
     Route::get('/professor', [PageController::class, 'professor'])->middleware('role:professor');
     Route::get('/create-exam', [PageController::class, 'createExam'])->middleware('role:professor');

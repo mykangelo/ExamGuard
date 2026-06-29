@@ -3,7 +3,7 @@
 @section('title', 'Professor Dashboard — ExamGuard')
 
 @section('body_attrs')
-data-role="professor"
+data-role="professor" class="eg-shell-body"
 @endsection
 
 @section('content')
@@ -115,7 +115,110 @@ html, body {
 }
 .pg-nav-link i { font-size: 17px; flex-shrink: 0; }
 
-.pg-sidebar-footer { display: none; }
+.pg-sidebar-footer {
+    padding: 12px 16px 16px;
+    border-top: 0.5px solid rgba(255,255,255,0.08);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.pg-sidebar-footer button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 0;
+    font-family: inherit;
+    color: rgba(255,255,255,0.55);
+    text-align: left;
+}
+.pg-sidebar-footer button:hover { color: #fff; }
+.pg-sidebar-footer i { font-size: 15px; }
+
+/* ── Sidebar live widget ─────────────────────────── */
+.pg-sidebar-live-widget {
+    padding: 0 16px;
+    margin: 18px 0 8px;
+    position: relative;
+    z-index: 2;
+    pointer-events: auto;
+}
+.pg-sidebar-live-widget.hidden { display: none !important; }
+.pg-live-widget-card {
+    width: 100%;
+    background: rgba(22, 36, 68, 0.75);
+    border: 0.5px solid rgba(255,255,255,0.10);
+    border-radius: 12px;
+    padding: 12px 12px 10px;
+    pointer-events: auto;
+}
+.pg-live-widget-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.pg-live-widget-label {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+    font-weight: 700;
+}
+.pg-live-widget-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 0 rgba(34,197,94,0.55);
+    animation: pgPulseGreen 1.5s ease-out infinite;
+}
+@keyframes pgPulseGreen {
+    0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); opacity: 1; }
+    70% { box-shadow: 0 0 0 10px rgba(34,197,94,0); opacity: 1; }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); opacity: 1; }
+}
+.pg-live-widget-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.pg-live-widget-sub {
+    margin-top: 2px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.42);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.pg-live-widget-meta { margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.62); }
+.pg-live-widget-btn {
+    margin-top: 10px;
+    width: 100%;
+    height: 32px;
+    border: none;
+    border-radius: 10px;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.12s;
+    pointer-events: auto;
+}
+.pg-live-widget-btn:hover { background: #2563eb; }
+.pg-live-widget-more {
+    margin: 8px 2px 0;
+    width: calc(100% - 4px);
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.40);
+    font-size: 11px;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+}
+.pg-live-widget-more:hover { color: rgba(255,255,255,0.70); text-decoration: underline; }
 
 /* ── Main workspace ───────────────────────────────── */
 .pg-main {
@@ -948,7 +1051,7 @@ html, body {
 #examsListView.hidden, #examsDetailView.hidden { display: none !important; }
 
 /* ── Exams tab workspace ─────────────────────────── */
-#view-exams { --exams-gap: 12px; --exams-content-width: 1160px; }
+#view-exams { --exams-gap: 12px; --exams-content-width: 1160px; --exams-table-height: min(500px, calc(100vh - 320px)); }
 
 #view-exams .pg-workspace-header {
     max-width: var(--exams-content-width);
@@ -959,6 +1062,11 @@ html, body {
 .pg-body:has(#view-classes.active) {
     display: flex; flex-direction: column;
     padding: 16px 24px; min-height: 0;
+}
+.pg-body:has(#view-exams.active),
+.pg-body:has(#view-overall-results.active) {
+    padding: 16px 24px 0;
+    overflow: hidden;
 }
 #view-exams.active,
 #view-overall-results.active,
@@ -972,7 +1080,8 @@ html, body {
     flex: 1; display: flex; flex-direction: column;
     justify-content: flex-start; align-items: center;
     width: 100%; gap: 16px;
-    padding-top: 200px; min-height: 0;
+    padding-top: 96px; padding-bottom: 48px; min-height: 0;
+    overflow: hidden;
 }
 #view-classes #classesView {
     flex: 1; display: flex; flex-direction: column;
@@ -1097,17 +1206,33 @@ html, body {
 
 #view-exams .pg-table-wrap {
     width: 100%; max-width: var(--exams-content-width); margin: 0 auto;
-    overflow: visible; flex-shrink: 0;
+    flex: 0 0 auto;
+    overflow: visible;
+    display: flex; flex-direction: column;
 }
-#view-exams .pg-table-wrap:has(.pg-exam-no-results.visible) {
+#view-exams .pg-exams-table-scroll {
+    max-height: var(--exams-table-height);
+    overflow-x: auto; overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+#view-exams .pg-exams-table-scroll.pg-exams-table-scroll--menu-open {
+    overflow: visible;
+}
+#view-exams .pg-table-wrap.pg-exams-table-wrap--menu-open {
+    overflow: visible;
+    z-index: 40;
+}
+#view-exams .pg-table-wrap:has(.pg-exam-no-results.visible) .pg-exams-table-scroll {
     min-height: 220px;
 }
-
 #view-exams .pg-exams-toolbar {
     display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
     padding: 8px 14px;
     border-bottom: 0.5px solid rgba(255,255,255,0.06);
-    background: rgba(255,255,255,0.015);
+    background: #162444;
+    flex-shrink: 0;
 }
 #view-exams .pg-filter-input {
     height: 28px; padding: 0 6px;
@@ -1155,6 +1280,8 @@ html, body {
 }
 #view-exams .pg-table th {
     font-size: 10px; letter-spacing: 1px; padding: 10px 14px;
+    position: sticky; top: 0; z-index: 2;
+    background: #162444;
 }
 #view-exams .pg-table th:nth-child(1) { width: 20%; text-align: left !important; }
 #view-exams .pg-table th:nth-child(2) { width: 8%; }
@@ -1184,7 +1311,7 @@ html, body {
 .pg-row-menu-btn:hover { background: rgba(255,255,255,0.06); color: #fff; }
 .pg-row-menu-panel {
     display: none; position: absolute; right: 0; top: calc(100% + 4px);
-    min-width: 168px; z-index: 50;
+    min-width: 168px; z-index: 350;
     background: #162444; border: 0.5px solid rgba(255,255,255,0.12);
     border-radius: 8px; padding: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
@@ -1193,6 +1320,9 @@ html, body {
     bottom: calc(100% + 4px);
 }
 .pg-row-menu-panel.open { display: block; }
+#view-exams .pg-table td:last-child { overflow: visible; position: relative; z-index: 1; }
+#view-exams .pg-table tr:has(.pg-row-menu-panel.open) { position: relative; z-index: 30; }
+#view-exams .pg-table tr:has(.pg-row-menu-panel.open) td { overflow: visible; }
 .pg-row-menu-panel button {
     display: flex; align-items: center; gap: 8px; width: 100%;
     padding: 8px 10px; border: none; border-radius: 6px;
@@ -1266,10 +1396,14 @@ html, body {
 #view-exams .pg-detail { width: 100%; max-width: var(--exams-content-width); }
 
 /* ── Overall results dashboard ───────────────────── */
+#view-overall-results {
+    --overall-list-max-h: min(340px, calc(100vh - 420px));
+}
 #view-overall-results #overallResultsView {
     flex: 1; display: flex; flex-direction: column; align-items: center;
-    justify-content: center; width: 100%;
-    padding: 16px 24px;
+    justify-content: flex-start; width: 100%;
+    padding: 48px 24px 48px; min-height: 0;
+    overflow: hidden;
 }
 #view-overall-results .pg-empty-state {
     flex: 1; display: flex; flex-direction: column;
@@ -1279,16 +1413,19 @@ html, body {
 .pg-overall {
     width: 100%; max-width: 900px;
     display: flex; flex-direction: column; gap: 18px;
+    flex: 1 1 auto; min-height: 0; max-height: 100%;
+    margin-top: 0; overflow: hidden;
 }
-.pg-overall-hero { text-align: center; }
+.pg-overall-hero { text-align: center; flex-shrink: 0; }
 .pg-overall-hero h2 {
-    font-size: 20px; font-weight: 600; color: #fff; margin: 0 0 6px;
+    font-size: 26px; font-weight: 700; color: #fff; margin: 0 0 8px;
 }
 .pg-overall-hero p {
     font-size: 13px; color: rgba(255,255,255,0.42); margin: 0;
 }
 .pg-overall-stats {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    flex-shrink: 0;
 }
 @@media (max-width: 768px) { .pg-overall-stats { grid-template-columns: 1fr; } }
 .pg-overall-stats .pg-stat-card { padding: 18px 20px; }
@@ -1297,15 +1434,18 @@ html, body {
 .pg-overall-stats .num.warn { color: #f59e0b; }
 .pg-overall-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    flex: 1 1 auto; min-height: 0; align-items: stretch;
 }
 @@media (max-width: 900px) { .pg-overall-grid { grid-template-columns: 1fr; } }
 .pg-overall-block {
     background: #162444; border: 0.5px solid rgba(255,255,255,0.07);
     border-radius: 10px; padding: 18px 20px; min-width: 0;
+    display: flex; flex-direction: column; min-height: 0;
+    max-height: 100%; overflow: hidden;
 }
 .pg-overall-block-head {
     display: flex; align-items: baseline; justify-content: space-between;
-    gap: 8px; margin-bottom: 14px;
+    gap: 8px; margin-bottom: 14px; flex-shrink: 0;
 }
 .pg-overall-block-head h3 {
     font-size: 14px; font-weight: 600; color: #fff; margin: 0;
@@ -1313,8 +1453,20 @@ html, body {
 .pg-overall-block-head span {
     font-size: 11px; color: rgba(255,255,255,0.38);
 }
-.pg-overall-exam-list { display: flex; flex-direction: column; gap: 14px; }
-.pg-overall-exam-row { display: flex; flex-direction: column; gap: 8px; }
+.pg-overall-exam-list,
+.pg-overall-activity-list {
+    display: flex; flex-direction: column;
+    gap: 14px;
+    flex: 1 1 auto; min-height: 0;
+    max-height: var(--overall-list-max-h);
+    overflow-x: hidden; overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.12) transparent;
+    padding-right: 2px;
+}
+.pg-overall-activity-list { gap: 12px; }
+.pg-overall-exam-row { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
 .pg-overall-exam-top {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
@@ -1341,10 +1493,11 @@ html, body {
 .pg-overall-empty {
     padding: 24px 8px; text-align: center;
     font-size: 13px; color: rgba(255,255,255,0.35);
+    flex: 1 1 auto; min-height: 120px;
+    display: flex; align-items: center; justify-content: center;
 }
-.pg-overall-activity-list { display: flex; flex-direction: column; gap: 12px; }
 .pg-overall-activity-row {
-    display: flex; align-items: center; gap: 12px;
+    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
 }
 .pg-overall-activity-info { flex: 1; min-width: 0; }
 .pg-overall-activity-name {
@@ -1367,16 +1520,19 @@ html, body {
 }
 #view-violations #violationsView {
     flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    width: 100%; padding: 16px 24px;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100%;
+    padding: 72px 24px 16px !important;
 }
 .pg-violations {
     width: 100%; max-width: 780px;
     display: flex; flex-direction: column; gap: 16px;
+    margin-top: 80px;
 }
-.pg-violations-hero { text-align: center; padding-top: 48px; }
+.pg-violations-hero { text-align: center; padding-top: 0; margin-top: 0; }
 .pg-violations-hero h2 {
-    font-size: 20px; font-weight: 600; color: #fff; margin: 0 0 6px;
+    font-size: 26px; font-weight: 700; color: #fff; margin: 0 0 8px;
 }
 .pg-violations-hero p {
     font-size: 13px; color: rgba(255,255,255,0.42); margin: 0;
@@ -1539,16 +1695,17 @@ html, body {
 }
 #view-live-sessions #proctoringView {
     flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    width: 100%; padding: 16px 24px;
+    align-items: center; justify-content: flex-start;
+    width: 100%; padding: 72px 24px 16px;
 }
 .pg-proctoring {
     width: 100%; max-width: 780px;
     display: flex; flex-direction: column; gap: 16px;
+    margin-top: 80px;
 }
-.pg-proctoring-hero { text-align: center; padding-top: 48px; }
+.pg-proctoring-hero { text-align: center; padding-top: 0; }
 .pg-proctoring-hero h2 {
-    font-size: 20px; font-weight: 600; color: #fff; margin: 0 0 6px;
+    font-size: 26px; font-weight: 700; color: #fff; margin: 0 0 8px;
 }
 .pg-proctoring-hero p {
     font-size: 13px; color: rgba(255,255,255,0.42); margin: 0;
@@ -1646,6 +1803,38 @@ html, body {
 #view-live-sessions .pg-proctoring-alert-flag {
     display: inline-flex; align-items: center; gap: 4px;
     margin-left: 6px; font-size: 10px; font-weight: 600; color: #f87171;
+}
+#view-live-sessions .pg-warn-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 700;
+    border: 0.5px solid rgba(255,255,255,0.10);
+    background: rgba(245,158,11,0.15);
+    color: #fbbf24;
+}
+#view-live-sessions .pg-warn-badge i { font-size: 13px; }
+#view-live-sessions .pg-warn-badge.is-low {
+    background: rgba(245,158,11,0.15);
+    color: #fbbf24;
+}
+#view-live-sessions .pg-warn-badge.is-near {
+    /* orange-ish escalation using same amber token, higher intensity */
+    background: rgba(245,158,11,0.25);
+    border-color: rgba(245,158,11,0.35);
+    color: #fdba74;
+}
+#view-live-sessions .pg-warn-badge.is-max {
+    background: rgba(239,68,68,0.15);
+    border-color: rgba(239,68,68,0.25);
+    color: #fca5a5;
+    animation: pgWarnPulse 0.9s ease-in-out infinite;
+}
+#view-live-sessions .pg-proctoring-row.is-warn-near { background: rgba(245,158,11,0.06); }
+#view-live-sessions .pg-proctoring-row.is-warn-max { background: rgba(239,68,68,0.08); }
+#view-live-sessions .pg-max-flag { display: inline-flex; margin-left: 6px; color: #fca5a5; }
+@keyframes pgWarnPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
 }
 #view-live-sessions .pg-table-empty { padding: 20px 12px; font-size: 12px; text-align: center; }
 #view-live-sessions .pg-table td.pg-table-empty { border-bottom: none; }
@@ -2703,8 +2892,11 @@ html, body {
     .pg-floating-notify i { font-size: 17px; }
     .pg-floating-profile .pg-avatar { width: 32px; height: 32px; font-size: 12px; }
     .pg-workspace-header { margin: -40px auto 20px; }
+    #view-overall-results { --overall-list-max-h: min(280px, calc(100vh - 380px)); }
+    #view-overall-results #overallResultsView { padding: 32px 16px 44px; }
+    #view-exams { --exams-table-height: min(420px, calc(100vh - 280px)); }
     #view-exams #examsListView:not(.hidden),
-    #view-exams #examsDetailView:not(.hidden) { padding-top: 88px; }
+    #view-exams #examsDetailView:not(.hidden) { padding-top: 64px; padding-bottom: 44px; }
     .pg-workspace-brand-link img { height: 64px; }
     .pg-workspace-brand-link span { font-size: 26px; }
     .pg-workspace-header .pg-floating-nav { margin-top: 14px; }
@@ -2724,6 +2916,7 @@ html, body {
     .pg-detail-tabs { display: none !important; }
 }
 </style>
+@include('partials.settings-shared-styles')
 
 <div class="pg-layout">
 
@@ -2753,16 +2946,18 @@ html, body {
             </button>
 
             <p class="pg-nav-label">Account</p>
-            <button type="button" class="pg-nav-link" data-view="profile">
-                <i class="ti ti-user"></i><span>Profile</span>
-            </button>
-            <button type="button" class="pg-nav-link" data-view="settings">
+            <button type="button" class="pg-nav-link" data-view="settings" data-open-settings-section="notifications">
                 <i class="ti ti-settings"></i><span>Settings</span>
             </button>
-            <button type="button" class="pg-nav-link" data-view="help">
-                <i class="ti ti-help-circle"></i><span>Help & Support</span>
-            </button>
         </nav>
+
+        <div id="pgSidebarLiveWidget" class="pg-sidebar-live-widget hidden" aria-live="polite"></div>
+
+        <div class="pg-sidebar-footer" aria-label="Sidebar footer">
+            <button type="button" data-view="help">
+                <i class="ti ti-help-circle"></i><span>Help &amp; Support</span>
+            </button>
+        </div>
     </aside>
 
     {{-- RIGHT: Workspace --}}
@@ -2835,6 +3030,7 @@ html, body {
                                 </select>
                                 <button type="button" id="examFilterClear" class="pg-filter-reset" aria-label="Clear filters">Reset</button>
                             </div>
+                            <div class="pg-exams-table-scroll">
                             <table class="pg-table" id="examsTable">
                                 <thead>
                                     <tr>
@@ -2929,6 +3125,7 @@ html, body {
                                 </tbody>
                             </table>
                             <div class="pg-table-empty pg-exam-no-results" id="examNoResults">No exams match the selected filters.</div>
+                            </div>
                         </div>
                     @endif
                 </div>
@@ -3290,7 +3487,13 @@ html, body {
 
             {{-- VIEW: Profile --}}
             <div class="pg-view" id="view-profile" data-view="profile">
-                @include('partials.professor-profile')
+                <div class="pg-settings" style="max-width: 920px; margin: 0 auto; padding: 32px 24px;">
+                    <header class="pg-settings-page-head">
+                        <h1>Profile moved</h1>
+                        <p class="pg-settings-page-sub">Your profile is now inside Settings.</p>
+                    </header>
+                    <button type="button" class="pg-settings-btn" data-view="settings" data-open-settings-section="profile">Go to Settings</button>
+                </div>
             </div>
 
             {{-- VIEW: Settings --}}
@@ -3331,13 +3534,15 @@ html, body {
         preferences: @json($user->preferencesWithDefaults()),
     };
 </script>
-<script src="/js/api-client.js?v=9"></script>
-<script src="/js/professor-settings.js?v=3"></script>
-<script src="/js/professor-notifications.js?v=2"></script>
+<script src="/js/api-client.js?v=11"></script>
 <script src="/js/professor-dialog.js?v=1"></script>
+<script src="/js/settings-shared.js?v=2"></script>
+<script src="/js/professor-settings.js?v=5"></script>
+<script src="/js/professor-notifications.js?v=2"></script>
+<script src="/js/professor-sidebar-live-widget.js?v=1"></script>
 <script src="/js/create-exam.js?v=18"></script>
 <script src="/js/professor-classes.js?v=4"></script>
-<script src="/js/professor-exams.js?v=6"></script>
+<script src="/js/professor-exams.js?v=9"></script>
 <script src="/js/professor-proctoring.js?v=2"></script>
 <script src="/js/professor-live-sessions.js?v=4"></script>
 <script src="/js/professor.js?v=48"></script>

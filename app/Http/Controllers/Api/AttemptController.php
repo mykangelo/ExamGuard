@@ -78,6 +78,7 @@ class AttemptController extends Controller
 
     public function reportViolation(Request $request, Exam $exam, ExamAttempt $attempt): JsonResponse
     {
+        // Authoritative violation log — warning_count is derived from these events at submit.
         if ($response = $this->authorizeAttempt($request, $exam, $attempt)) {
             return $response;
         }
@@ -88,29 +89,68 @@ class AttemptController extends Controller
 
         $input = $request->validate([
             'type' => ['required', 'string', 'max:40'],
-            'severity' => ['required', 'string', Rule::in([
-                ViolationEvent::SEVERITY_MINOR,
-                ViolationEvent::SEVERITY_MODERATE,
-                ViolationEvent::SEVERITY_CRITICAL,
-            ])],
-            'message' => ['required', 'string', 'max:500'],
+            // client values below are accepted as data only; server decides severity/message/count
             'snapshot' => ['nullable', 'string'],
             'occurredAt' => ['nullable', 'date'],
+            'meta' => ['nullable', 'array'],
         ]);
 
         $snapshotPath = $this->storeSnapshot($input['snapshot'] ?? null, $attempt->id);
 
+        $type = $input['type'];
+        $now = now();
+        $occurredAt = ! empty($input['occurredAt']) ? Carbon::parse($input['occurredAt']) : $now;
+
+        $baseSeverity = match ($type) {
+            'tab_switch', 'mouse_leave', 'copy_attempt', 'paste_attempt', 'context_menu' => ViolationEvent::SEVERITY_MINOR,
+            'no_face', 'audio_loud', 'fullscreen_exit' => ViolationEvent::SEVERITY_MODERATE,
+            'multiple_faces' => ViolationEvent::SEVERITY_CRITICAL,
+            default => ViolationEvent::SEVERITY_MINOR,
+        };
+
+        // auto-escalation: after 2 minors of same type, next becomes moderate
+        $minorCount = ViolationEvent::query()
+            ->where('exam_attempt_id', $attempt->id)
+            ->where('type', $type)
+            ->where('severity', ViolationEvent::SEVERITY_MINOR)
+            ->count();
+
+        $severity = ($baseSeverity === ViolationEvent::SEVERITY_MINOR && $minorCount >= 2)
+            ? ViolationEvent::SEVERITY_MODERATE
+            : $baseSeverity;
+
+        $serverMessage = match ($type) {
+            'tab_switch' => 'Tab switching detected',
+            'mouse_leave' => 'Mouse left the exam window',
+            'no_face' => 'No face detected in camera frame',
+            'multiple_faces' => 'Multiple faces detected in camera frame',
+            'audio_loud' => 'Unusually loud audio detected',
+            'fullscreen_exit' => 'Exited fullscreen during exam',
+            'copy_attempt' => 'Copy attempt blocked',
+            'paste_attempt' => 'Paste attempt blocked',
+            'context_menu' => 'Right-click context menu blocked',
+            default => 'Proctoring warning recorded',
+        };
+
+        $timeRemaining = null;
+        if ($attempt->started_at && $exam->time_limit) {
+            $elapsed = max(0, $occurredAt->diffInSeconds($attempt->started_at));
+            $timeRemaining = max(0, ($exam->time_limit * 60) - $elapsed);
+        }
+
         $event = ViolationEvent::create([
             'exam_attempt_id' => $attempt->id,
-            'type' => $input['type'],
-            'severity' => $input['severity'],
-            'message' => $input['message'],
+            'type' => $type,
+            'severity' => $severity,
+            'message' => $serverMessage,
             'snapshot_path' => $snapshotPath,
-            'occurred_at' => ! empty($input['occurredAt']) ? Carbon::parse($input['occurredAt']) : now(),
+            'occurred_at' => $occurredAt,
+            'time_remaining_seconds' => $timeRemaining,
+            'meta_json' => $input['meta'] ?? null,
         ]);
 
-        $attempt->increment('warning_count');
         $attempt->update(['last_heartbeat_at' => now()]);
+        $attempt->syncWarningCountFromEvents();
 
         return response()->json([
             'event' => $event->toArray(),
@@ -132,7 +172,6 @@ class AttemptController extends Controller
 
         $input = $request->validate([
             'answers' => ['nullable', 'array'],
-            'warningCount' => ['nullable', 'integer', 'min:0'],
             'startedAt' => ['nullable', 'date'],
         ]);
 
@@ -142,6 +181,10 @@ class AttemptController extends Controller
 
         if ($attempt?->status === ExamAttempt::STATUS_SUBMITTED) {
             return response()->json(['error' => 'Exam already submitted.'], 409);
+        }
+
+        if (! $attempt || ! $attempt->isInProgress()) {
+            return response()->json(['error' => 'Start the exam session before submitting.'], 409);
         }
 
         $questions = Question::where('exam_id', $exam->id)->orderBy('position')->get();
@@ -154,36 +197,25 @@ class AttemptController extends Controller
             }
         }
 
-        $payload = [
+        $attempt->syncWarningCountFromEvents();
+
+        $attempt->update([
             'status' => ExamAttempt::STATUS_SUBMITTED,
             'score' => $score,
             'total' => $questions->count(),
-            'warning_count' => max(
-                $attempt?->warning_count ?? 0,
-                max(0, $input['warningCount'] ?? 0),
-            ),
             'answers_json' => $answers,
             'submitted_at' => now(),
             'last_heartbeat_at' => now(),
-        ];
-
-        if ($attempt) {
-            $attempt->update($payload);
-        } else {
-            $attempt = ExamAttempt::create(array_merge($payload, [
-                'exam_id' => $exam->id,
-                'student_id' => $user->id,
-                'started_at' => $input['startedAt'] ?? now(),
-            ]));
-        }
+        ]);
 
         return response()->json([
             'attempt' => [
                 'id' => $attempt->id,
                 'score' => $attempt->score,
                 'total' => $attempt->total,
+                'warningCount' => $attempt->warning_count,
             ],
-        ], $attempt->wasRecentlyCreated ? 201 : 200);
+        ]);
     }
 
     private function authorizeAttempt(Request $request, Exam $exam, ExamAttempt $attempt): ?JsonResponse

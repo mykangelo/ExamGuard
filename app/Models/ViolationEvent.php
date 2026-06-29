@@ -21,12 +21,15 @@ class ViolationEvent extends Model
         'message',
         'snapshot_path',
         'occurred_at',
+        'time_remaining_seconds',
+        'meta_json',
     ];
 
     protected function casts(): array
     {
         return [
             'occurred_at' => 'datetime',
+            'meta_json' => 'array',
         ];
     }
 
@@ -53,6 +56,7 @@ class ViolationEvent extends Model
             'message' => $this->message,
             'snapshotUrl' => $this->snapshotUrl(),
             'occurredAt' => $this->occurred_at?->toIso8601String(),
+            'timeRemainingSeconds' => $this->time_remaining_seconds,
         ];
     }
 }

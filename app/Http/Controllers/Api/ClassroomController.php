@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Classroom;
 use App\Models\Enrollment;
+use App\Services\StudentNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -96,6 +97,7 @@ class ClassroomController extends Controller
             return response()->json(['error' => 'Not authorized.'], 403);
         }
 
+        StudentNotificationService::notifyClassDeleted($classroom);
         $classroom->delete();
 
         return response()->json(['ok' => true]);

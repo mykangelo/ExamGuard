@@ -12,7 +12,7 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'role', 'preferences'];
+    protected $fillable = ['name', 'email', 'password', 'role', 'preferences', 'avatar_path'];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -32,6 +32,13 @@ class User extends Authenticatable implements MustVerifyEmail
             'defaultWarningLimit'  => 3,
             'defaultTimeLimit'     => 60,
             'readNotificationIds'  => [],
+            'emailExamAssigned'    => true,
+            'emailClassUpdates'    => true,
+            'emailExamReminder'    => true,
+            'emailExamResults'     => true,
+            'department'           => '',
+            'yearLevel'            => '',
+            'studentId'            => '',
         ];
     }
 
@@ -62,6 +69,8 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function toAuthArray(): array
     {
+        $prefs = $this->preferencesWithDefaults();
+
         return [
             'id'           => $this->id,
             'name'         => $this->name,
@@ -69,7 +78,11 @@ class User extends Authenticatable implements MustVerifyEmail
             'role'         => $this->role,
             'verified'     => $this->hasVerifiedEmail(),
             'member_since' => $this->created_at?->format('M j, Y'),
-            'preferences'  => $this->preferencesWithDefaults(),
+            'avatarUrl'    => $this->avatar_path ? asset('storage/'.$this->avatar_path) : null,
+            'department'   => $prefs['department'] ?? '',
+            'yearLevel'    => $prefs['yearLevel'] ?? '',
+            'studentId'    => $prefs['studentId'] ?? '',
+            'preferences'  => $prefs,
         ];
     }
 }

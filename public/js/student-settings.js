@@ -2,6 +2,7 @@
   'use strict';
 
   let currentUser = null;
+  let bound = false;
 
   function initials(name) {
     const parts = (name || 'U').trim().split(/\s+/).filter(Boolean);
@@ -14,25 +15,22 @@
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   }
 
-  function getActiveAlert() {
-    const profileView = document.getElementById('view-profile');
-    if (profileView?.classList.contains('active')) {
-      return document.getElementById('profileAlert');
-    }
-    return document.getElementById('settingsAlert');
+  function getAlert() {
+    return document.getElementById('sdSettingsAlert');
   }
 
   function showAlert(message, type = 'success') {
-    const alert = getActiveAlert();
+    const alert = getAlert();
     if (!alert) return;
     const icon = type === 'error' ? 'ti-alert-circle' : 'ti-circle-check';
     alert.innerHTML = `<i class="ti ${icon}" aria-hidden="true"></i><span>${message}</span>`;
     alert.classList.remove('hidden', 'is-error', 'is-success');
     alert.classList.add(type === 'error' ? 'is-error' : 'is-success');
+    alert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   function hideAlert() {
-    const alert = getActiveAlert();
+    const alert = getAlert();
     if (!alert) return;
     alert.classList.add('hidden');
     alert.innerHTML = '';
@@ -60,8 +58,7 @@
       formError.classList.add('hidden');
       formError.innerHTML = '';
     }
-    const card = getFormCard(form);
-    card?.classList.remove('has-errors', 'is-shake');
+    getFormCard(form)?.classList.remove('has-errors', 'is-shake');
   }
 
   function setFieldError(form, fieldName, message) {
@@ -69,7 +66,7 @@
     if (!wrap) return false;
     const input = wrap.querySelector('input, select');
     const errorEl = wrap.querySelector('[data-field-error]');
-    const errorId = `settings-error-${fieldName}`;
+    const errorId = `sd-settings-error-${fieldName}`;
 
     wrap.classList.add('is-error');
     if (input) {
@@ -116,9 +113,7 @@
       }
     });
 
-    if (!applied && fallbackMessage) {
-      setFormError(form, fallbackMessage);
-    }
+    if (!applied && fallbackMessage) setFormError(form, fallbackMessage);
 
     if (applied || fallbackMessage) {
       shakeCard(form);
@@ -131,8 +126,8 @@
 
   function validateProfileForm(form) {
     const errors = {};
-    const name = form.querySelector('#settingsName')?.value.trim() ?? '';
-    const email = form.querySelector('#settingsEmail')?.value.trim() ?? '';
+    const name = form.querySelector('#sdSettingsName')?.value.trim() ?? '';
+    const email = form.querySelector('#sdSettingsEmail')?.value.trim() ?? '';
 
     if (!name) errors.name = 'Full name is required.';
     else if (name.length > 255) errors.name = 'Full name must be 255 characters or fewer.';
@@ -145,29 +140,15 @@
 
   function validatePasswordForm(form) {
     const errors = {};
-    const current = form.querySelector('#settingsCurrentPassword')?.value ?? '';
-    const next = form.querySelector('#settingsNewPassword')?.value ?? '';
-    const confirm = form.querySelector('#settingsConfirmPassword')?.value ?? '';
+    const current = form.querySelector('#sdSettingsCurrentPassword')?.value ?? '';
+    const next = form.querySelector('#sdSettingsNewPassword')?.value ?? '';
+    const confirm = form.querySelector('#sdSettingsConfirmPassword')?.value ?? '';
 
     if (!current) errors.current_password = 'Enter your current password.';
     if (!next) errors.password = 'Enter a new password.';
     else if (next.length < 8) errors.password = 'New password must be at least 8 characters.';
     if (!confirm) errors.password_confirmation = 'Confirm your new password.';
     else if (next && confirm !== next) errors.password_confirmation = 'Passwords do not match.';
-
-    return errors;
-  }
-
-  function validateWorkspaceForm(form) {
-    const errors = {};
-    const raw = form.querySelector('#settingsDefaultTimeLimit')?.value.trim() ?? '';
-
-    if (raw !== '') {
-      const value = Number(raw);
-      if (!Number.isInteger(value) || value < 1 || value > 480) {
-        errors.defaultTimeLimit = 'Time limit must be between 1 and 480 minutes.';
-      }
-    }
 
     return errors;
   }
@@ -180,9 +161,7 @@
   }
 
   function handleApiError(form, error, fallbackMessage) {
-    if (error?.errors && applyErrors(form, error.errors, error.message)) {
-      return;
-    }
+    if (error?.errors && applyErrors(form, error.errors, error.message)) return;
     applyErrors(form, {}, error?.message || fallbackMessage);
   }
 
@@ -201,20 +180,25 @@
   function applyUser(user) {
     currentUser = user;
     const ui = window.ExamGuardSettingsUI;
-    window.ExamGuardProfessor = window.ExamGuardProfessor || {};
-    window.ExamGuardProfessor.user = user;
-    window.ExamGuardProfessor.preferences = user.preferences;
+    window.ExamGuardStudent = window.ExamGuardStudent || {};
+    window.ExamGuardStudent.user = user;
+    window.ExamGuardStudent.preferences = user.preferences;
+    window.ExamGuardStudent?.applyUser?.(user);
 
-    const nameInput = document.getElementById('settingsName');
-    const emailInput = document.getElementById('settingsEmail');
+    const nameInput = document.getElementById('sdSettingsName');
+    const emailInput = document.getElementById('sdSettingsEmail');
     if (nameInput) nameInput.value = user.name || '';
     if (emailInput) emailInput.value = user.email || '';
 
-    const department = document.getElementById('settingsDepartment');
+    const department = document.getElementById('sdSettingsDepartment');
+    const yearLevel = document.getElementById('sdSettingsYearLevel');
+    const studentId = document.getElementById('sdSettingsStudentId');
     if (department) department.value = user.department || '';
+    if (yearLevel) yearLevel.value = user.yearLevel || '';
+    if (studentId) studentId.value = user.studentId || '';
 
-    ui?.renderAvatarButton?.(document.getElementById('settingsAvatarBtn'), user);
-    const navAvatar = document.querySelector('.pg-floating-profile .pg-avatar');
+    ui?.renderAvatarButton?.(document.getElementById('sdSettingsAvatarBtn'), user);
+    const navAvatar = document.getElementById('sdAvatarBtn');
     if (navAvatar) {
       if (user.avatarUrl) {
         navAvatar.innerHTML = `<img src="${user.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
@@ -223,7 +207,7 @@
       }
     }
 
-    const emailWrap = document.querySelector('#settingsProfileForm .pg-settings-email-wrap');
+    const emailWrap = document.querySelector('#sdSettingsProfileForm .pg-settings-email-wrap');
     if (emailWrap) {
       const badge = emailWrap.querySelector('.pg-settings-badge');
       if (badge) {
@@ -234,57 +218,31 @@
       }
     }
 
-    const verifiedStatus = document.getElementById('settingsVerifiedStatus');
+    const verifiedStatus = document.getElementById('sdSettingsVerifiedStatus');
     if (verifiedStatus) {
       verifiedStatus.innerHTML = user.verified
         ? '<span class="pg-settings-badge pg-settings-badge-ok">Verified</span>'
         : '<span class="pg-settings-badge pg-settings-badge-warn">Unverified</span>';
     }
 
-    const memberSince = document.getElementById('settingsMemberSince');
+    const memberSince = document.getElementById('sdSettingsMemberSince');
     if (memberSince && user.member_since) memberSince.textContent = user.member_since;
 
     const prefs = user.preferences || {};
-    const examSubmitted = document.getElementById('settingsEmailExamSubmitted');
-    const violations = document.getElementById('settingsEmailViolations');
-    const examReminder = document.getElementById('settingsEmailExamReminder');
-    const timeLimit = document.getElementById('settingsDefaultTimeLimit');
-    const warningLimit = document.getElementById('settingsDefaultWarningLimit');
-
-    if (examSubmitted) examSubmitted.checked = !!prefs.emailExamSubmitted;
-    if (violations) violations.checked = !!prefs.emailViolations;
-    if (examReminder) examReminder.checked = prefs.emailExamReminder !== false;
-    if (timeLimit) timeLimit.value = prefs.defaultTimeLimit ?? 60;
-    if (warningLimit) warningLimit.value = String(prefs.defaultWarningLimit ?? 3);
-  }
-
-  function bindProfileUi() {
-    const root = document.getElementById('profileView');
-    if (!root || root.dataset.uiBound === '1') return;
-    root.dataset.uiBound = '1';
-    const ui = window.ExamGuardSettingsUI;
-    ui?.bindPasswordToggles?.(root);
-    ui?.bindPasswordStrength?.(
-      document.getElementById('settingsNewPassword'),
-      document.getElementById('settingsPwStrength'),
-    );
-    ui?.bindAvatarUpload?.({
-      buttonId: 'settingsAvatarBtn',
-      inputId: 'settingsAvatarInput',
-      onUploaded: applyUser,
+    const toggles = {
+      sdSettingsEmailExamAssigned: prefs.emailExamAssigned,
+      sdSettingsEmailClassUpdates: prefs.emailClassUpdates,
+      sdSettingsEmailExamReminder: prefs.emailExamReminder,
+      sdSettingsEmailExamResults: prefs.emailExamResults,
+    };
+    Object.entries(toggles).forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (el) el.checked = value !== false;
     });
-    ui?.bindDangerZone?.({
-      logoutAllId: 'settingsLogoutAll',
-      deleteId: 'settingsDeleteAccount',
-    });
-  }
-
-  function clearAllFormErrors() {
-    document.querySelectorAll('#profileView form, #settingsView form').forEach(clearFormErrors);
   }
 
   async function loadUser() {
-    const seed = window.ExamGuardProfessor?.user;
+    const seed = window.ExamGuardStudent?.user;
     if (seed) {
       applyUser(seed);
       return;
@@ -293,62 +251,53 @@
     applyUser(user);
   }
 
-  async function initProfile() {
+  async function init() {
+    const root = document.getElementById('sdSettingsView');
+    if (!root) return;
+
     hideAlert();
-    clearAllFormErrors();
+    document.querySelectorAll('#sdSettingsView form').forEach(clearFormErrors);
+
     try {
       await loadUser();
-      bindProfileUi();
-    } catch (error) {
-      showAlert(error.message || 'Unable to load profile.', 'error');
-    }
-  }
+      const ui = window.ExamGuardSettingsUI;
+      ui?.bindPasswordToggles?.(root);
+      ui?.bindPasswordStrength?.(
+        document.getElementById('sdSettingsNewPassword'),
+        document.getElementById('sdSettingsPwStrength'),
+      );
+      ui?.bindAvatarUpload?.({
+        buttonId: 'sdSettingsAvatarBtn',
+        inputId: 'sdSettingsAvatarInput',
+        onUploaded: applyUser,
+      });
+      ui?.bindDangerZone?.({
+        logoutAllId: 'sdSettingsLogoutAll',
+        deleteId: 'sdSettingsDeleteAccount',
+      });
 
-  async function initSettings() {
-    hideAlert();
-    clearAllFormErrors();
-    try {
-      await loadUser();
-      bindProfileUi();
+      // Settings sub-nav: show one section at a time
+      const navButtons = root.querySelectorAll('[data-sd-settings-section]');
+      const sections = root.querySelectorAll('.sd-settings-section[data-sd-settings-section]');
+      const grid = document.getElementById('sdSettingsGrid');
 
-      // Settings sub-nav: show one section at a time (professor settings tab)
-      const root = document.getElementById('settingsView');
-      if (root && root.dataset.subnavBound !== '1') {
-        root.dataset.subnavBound = '1';
-        const navButtons = root.querySelectorAll('[data-pg-settings-section]');
-        const sections = root.querySelectorAll('.sd-settings-section[data-pg-settings-section]');
-        const grid = document.getElementById('pgSettingsGrid');
+      const showSection = (key) => {
+        if (grid) grid.classList.add('sd-settings-grid-single');
+        sections.forEach((el) => el.classList.toggle('hidden', el.dataset.sdSettingsSection !== key));
+        navButtons.forEach((btn) => btn.classList.toggle('active', btn.dataset.sdSettingsSection === key));
+      };
 
-        const showSection = (key) => {
-          if (grid) grid.classList.add('sd-settings-grid-single');
-          sections.forEach((el) => el.classList.toggle('hidden', el.dataset.pgSettingsSection !== key));
-          navButtons.forEach((btn) => btn.classList.toggle('active', btn.dataset.pgSettingsSection === key));
-        };
-
-        navButtons.forEach((btn) => {
-          btn.addEventListener('click', () => {
-            const key = btn.dataset.pgSettingsSection;
-            if (!key) return;
-            showSection(key);
-          });
+      navButtons.forEach((btn) => {
+        if (btn.dataset.bound === '1') return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', () => {
+          const key = btn.dataset.sdSettingsSection;
+          if (!key) return;
+          showSection(key);
         });
+      });
 
-        // Sidebar "Profile"/"Settings" buttons can request a specific section
-        document.querySelectorAll('[data-open-settings-section]').forEach((btn) => {
-          if (btn.dataset.boundSettingsSection === '1') return;
-          btn.dataset.boundSettingsSection = '1';
-          btn.addEventListener('click', () => {
-            const key = btn.dataset.openSettingsSection;
-            if (!key) return;
-            window.setTimeout(() => showSection(key), 0);
-          });
-        });
-
-        showSection(document.querySelector('[data-open-settings-section].active')?.dataset.openSettingsSection || 'profile');
-
-        // Expose for other scripts
-        window.ExamGuardSettings.showSection = showSection;
-      }
+      showSection('profile');
     } catch (error) {
       showAlert(error.message || 'Unable to load settings.', 'error');
     }
@@ -361,14 +310,16 @@
     clearFormErrors(form);
     if (!handleClientValidation(form, validateProfileForm)) return;
 
-    const btn = document.getElementById('settingsProfileBtn');
+    const btn = document.getElementById('sdSettingsProfileBtn');
     setButtonLoading(btn, true, 'Saving…');
 
     try {
       const result = await ExamGuardApi.updateProfile({
-        name: form.querySelector('#settingsName')?.value.trim(),
-        email: form.querySelector('#settingsEmail')?.value.trim(),
-        department: form.querySelector('#settingsDepartment')?.value.trim() || '',
+        name: form.querySelector('#sdSettingsName')?.value.trim(),
+        email: form.querySelector('#sdSettingsEmail')?.value.trim(),
+        department: form.querySelector('#sdSettingsDepartment')?.value.trim() || '',
+        yearLevel: form.querySelector('#sdSettingsYearLevel')?.value.trim() || '',
+        studentId: form.querySelector('#sdSettingsStudentId')?.value.trim() || '',
       });
       applyUser(result.user);
       const message = result.email_verification_sent
@@ -389,14 +340,14 @@
     clearFormErrors(form);
     if (!handleClientValidation(form, validatePasswordForm)) return;
 
-    const btn = document.getElementById('settingsPasswordBtn');
+    const btn = document.getElementById('sdSettingsPasswordBtn');
     setButtonLoading(btn, true, 'Updating…');
 
     try {
       await ExamGuardApi.updatePassword({
-        current_password: form.querySelector('#settingsCurrentPassword')?.value,
-        password: form.querySelector('#settingsNewPassword')?.value,
-        password_confirmation: form.querySelector('#settingsConfirmPassword')?.value,
+        current_password: form.querySelector('#sdSettingsCurrentPassword')?.value,
+        password: form.querySelector('#sdSettingsNewPassword')?.value,
+        password_confirmation: form.querySelector('#sdSettingsConfirmPassword')?.value,
       });
       form.reset();
       window.ExamGuardSettingsUI?.toast?.('Password changed successfully.', 'success');
@@ -413,14 +364,15 @@
     hideAlert();
     clearFormErrors(form);
 
-    const btn = document.getElementById('settingsNotificationsBtn');
+    const btn = document.getElementById('sdSettingsNotificationsBtn');
     setButtonLoading(btn, true, 'Saving…');
 
     try {
       const result = await ExamGuardApi.updatePreferences({
-        emailExamSubmitted: document.getElementById('settingsEmailExamSubmitted')?.checked ?? false,
-        emailViolations: document.getElementById('settingsEmailViolations')?.checked ?? false,
-        emailExamReminder: document.getElementById('settingsEmailExamReminder')?.checked ?? false,
+        emailExamAssigned: document.getElementById('sdSettingsEmailExamAssigned')?.checked ?? false,
+        emailClassUpdates: document.getElementById('sdSettingsEmailClassUpdates')?.checked ?? false,
+        emailExamReminder: document.getElementById('sdSettingsEmailExamReminder')?.checked ?? false,
+        emailExamResults: document.getElementById('sdSettingsEmailExamResults')?.checked ?? false,
       });
       applyUser(result.user);
       window.ExamGuardSettingsUI?.toast?.('Notification preferences saved.', 'success');
@@ -428,31 +380,6 @@
       handleApiError(form, error, 'Unable to save notifications.');
     } finally {
       setButtonLoading(btn, false, 'Save notifications');
-    }
-  }
-
-  async function handleWorkspaceSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    hideAlert();
-    clearFormErrors(form);
-    if (!handleClientValidation(form, validateWorkspaceForm)) return;
-
-    const btn = document.getElementById('settingsWorkspaceBtn');
-    setButtonLoading(btn, true, 'Saving…');
-
-    try {
-      const timeRaw = form.querySelector('#settingsDefaultTimeLimit')?.value.trim();
-      const result = await ExamGuardApi.updatePreferences({
-        defaultTimeLimit: timeRaw ? Number(timeRaw) : null,
-        defaultWarningLimit: Number(form.querySelector('#settingsDefaultWarningLimit')?.value || 3),
-      });
-      applyUser(result.user);
-      window.ExamGuardSettingsUI?.toast?.('Workspace defaults saved.', 'success');
-    } catch (error) {
-      handleApiError(form, error, 'Unable to save defaults.');
-    } finally {
-      setButtonLoading(btn, false, 'Save defaults');
     }
   }
 
@@ -479,20 +406,21 @@
   }
 
   function bindForms() {
-    const profileForm = document.getElementById('settingsProfileForm');
-    const passwordForm = document.getElementById('settingsPasswordForm');
-    const notificationsForm = document.getElementById('settingsNotificationsForm');
-    const workspaceForm = document.getElementById('settingsWorkspaceForm');
+    if (bound) return;
+    bound = true;
+
+    const profileForm = document.getElementById('sdSettingsProfileForm');
+    const passwordForm = document.getElementById('sdSettingsPasswordForm');
+    const notificationsForm = document.getElementById('sdSettingsNotificationsForm');
 
     profileForm?.addEventListener('submit', handleProfileSubmit);
     passwordForm?.addEventListener('submit', handlePasswordSubmit);
     notificationsForm?.addEventListener('submit', handleNotificationsSubmit);
-    workspaceForm?.addEventListener('submit', handleWorkspaceSubmit);
 
-    [profileForm, passwordForm, workspaceForm].filter(Boolean).forEach(bindFieldClear);
+    [profileForm, passwordForm].filter(Boolean).forEach(bindFieldClear);
   }
 
   bindForms();
 
-  window.ExamGuardSettings = { init: initSettings, initProfile };
+  window.ExamGuardStudentSettings = { init };
 })();

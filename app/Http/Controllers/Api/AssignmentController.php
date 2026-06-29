@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Classroom;
 use App\Models\Exam;
 use App\Models\ExamAssignment;
+use App\Services\StudentNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -31,10 +32,18 @@ class AssignmentController extends Controller
             return response()->json(['error' => 'Exam or class not found.'], 404);
         }
 
-        ExamAssignment::firstOrCreate([
+        $assignment = ExamAssignment::firstOrCreate([
             'exam_id' => $input['examId'],
             'classroom_id' => $input['classId'],
         ], ['assigned_at' => now()]);
+
+        if ($assignment->wasRecentlyCreated) {
+            $exam = Exam::find($input['examId']);
+            $classroom = Classroom::find($input['classId']);
+            if ($exam && $classroom) {
+                StudentNotificationService::notifyExamAssigned($exam, $classroom);
+            }
+        }
 
         return response()->json(['ok' => true], 201);
     }

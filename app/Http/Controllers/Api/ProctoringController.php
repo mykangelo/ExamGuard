@@ -18,7 +18,8 @@ class ProctoringController extends Controller
         $attempts = ExamAttempt::query()
             ->with([
                 'student:id,name',
-                'exam:id,title,time_limit,professor_id',
+                'exam:id,title,time_limit,warning_limit,professor_id',
+                'exam.assignments.classroom:id,name',
                 'violationEvents' => fn ($query) => $query->latest('occurred_at')->limit(1),
             ])
             ->whereHas('exam', fn ($query) => $query->where('professor_id', $professorId))
@@ -43,10 +44,12 @@ class ProctoringController extends Controller
                     'studentName' => $attempt->student?->name ?? 'Unknown',
                     'examId' => $attempt->exam_id,
                     'examTitle' => $attempt->exam?->title ?? 'Exam',
+                    'className' => $attempt->exam?->assignedClassroom()?->name,
                     'status' => $attempt->displayStatus(),
                     'elapsedSeconds' => $elapsedSeconds,
                     'remainingSeconds' => $remainingSeconds,
                     'warningCount' => $attempt->warning_count,
+                    'warningLimit' => $attempt->exam?->warning_limit ?? 3,
                     'severitySummary' => $summary,
                     'severityLabel' => $attempt->severitySummaryLabel(),
                     'hasNewViolation' => $latestEvent && $latestEvent->occurred_at?->gt(now()->subSeconds(20)),

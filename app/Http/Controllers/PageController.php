@@ -74,7 +74,9 @@ class PageController extends Controller
 
     public function student()
     {
-        return view('pages.student');
+        return view('pages.student', [
+            'user' => Auth::user(),
+        ]);
     }
 
     public function createExam(Request $request)
@@ -99,7 +101,9 @@ class PageController extends Controller
 
     public function takeExam()
     {
-        return view('pages.take-exam');
+        return view('pages.take-exam', [
+            'proctoringDemo' => config('proctoring.demo_mode'),
+        ]);
     }
 
     public function examRoom()

@@ -7,8 +7,8 @@ const sessionStatus = document.getElementById("sessionStatus");
 const warningCountEl = document.getElementById("warningCount");
 const tabStatus = document.getElementById("tabStatus");
 const simulateBtn = document.getElementById("simulateBtn");
-const submitBtn = document.getElementById("submitBtn") || document.getElementById("submitExamBtn");
 const logList = document.getElementById("logList");
+const submitBtn = document.getElementById("submitBtn") || document.querySelector(".te-submit-btn");
 const warningToast = document.getElementById("warningToast");
 
 let warningCount = 0;
@@ -71,7 +71,7 @@ async function enableCamera() {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
     cameraVideo.srcObject = stream;
     cameraVideo.classList.remove("hidden");
-    cameraPlaceholder.style.display = "none";
+    if (cameraPlaceholder) cameraPlaceholder.style.display = "none";
     cameraStatus.textContent = "Active";
     await setupFaceLandmarker();
     startFaceTracking();
@@ -133,51 +133,63 @@ function captureSnapshot() {
   }
 }
 
-function showWarningToast(message) {
+function showWarningToast() {
   if (!warningToast) return;
-  warningToast.textContent = message;
+  warningToast.textContent = "A warning has been recorded. Please stay focused on your exam.";
   warningToast.classList.add("show");
   setTimeout(() => warningToast.classList.remove("show"), 3500);
 }
 
-function severityLabel(severity) {
-  if (severity === SEVERITY.CRITICAL) return "Critical";
-  if (severity === SEVERITY.MODERATE) return "Moderate";
-  return "Minor";
+function appendLogEntry(reason) {
+  if (!logList) return;
+  const empty = logList.querySelector("[data-empty]");
+  if (empty) empty.remove();
+  const row = document.createElement("div");
+  row.className = "rounded-xl bg-white/5 px-4 py-2";
+  row.textContent = `${new Date().toLocaleTimeString()} — ${reason}`;
+  logList.prepend(row);
 }
 
-function addWarning(type, severity, reason) {
-  if (sessionLocked || !warningCountEl || !logList) return;
+async function addWarning(type, severity, reason) {
+  if (sessionLocked || !warningCountEl) return;
 
-  warningCount += 1;
-  warningCountEl.textContent = warningCount;
-  showWarningToast(reason);
-
-  if (logList.children.length === 1 && logList.children[0].textContent === "No violations recorded.") {
-    logList.innerHTML = "";
-  }
-
-  const item = document.createElement("div");
-  item.className = `rounded-xl bg-white/5 px-4 py-2 pg-violation-log-item pg-severity-${severity}`;
-  item.innerHTML = `<span class="pg-severity-pill pg-severity-${severity}">${severityLabel(severity)}</span> ${reason} — ${new Date().toLocaleTimeString()}`;
-  logList.prepend(item);
+  showWarningToast();
+  appendLogEntry(reason);
 
   const snapshot = captureSnapshot();
   const payload = {
     type,
     severity,
-    message: reason,
+    message: "Proctoring warning recorded",
     snapshot,
     occurredAt: new Date().toISOString(),
   };
 
   document.dispatchEvent(new CustomEvent("examguard:violation", { detail: payload }));
-  window.ExamGuardSession?.reportViolation?.(payload);
+
+  let nextCount = warningCount + 1;
+  if (window.ExamGuardSession?.reportViolation) {
+    try {
+      const result = await window.ExamGuardSession.reportViolation(payload);
+      if (typeof result?.warningCount === "number") {
+        nextCount = result.warningCount;
+      }
+    } catch (_) {}
+  }
+
+  warningCount = nextCount;
+  warningCountEl.textContent = String(warningCount);
+  document.dispatchEvent(new CustomEvent("examguard:warning-added", { detail: { type, severity } }));
 
   if (warningCount >= sessionWarningLimit) {
-    lockSession();
+    // Outcome is configured per exam (default notify); student never sees details.
+    const action = window.ExamGuardProctoring?.maxWarningAction || "notify";
+    document.dispatchEvent(new CustomEvent("examguard:max-warnings", { detail: { action, count: warningCount, limit: sessionWarningLimit } }));
+    if (action === "lock") {
+      lockSession();
+    }
   } else if (sessionStatus) {
-    sessionStatus.textContent = "Warning Recorded";
+    sessionStatus.textContent = "Warning recorded";
   }
 }
 
@@ -185,34 +197,20 @@ function lockSession() {
   sessionLocked = true;
   if (sessionStatus) sessionStatus.textContent = "Locked";
   if (faceStatus) faceStatus.textContent = "Stopped";
-  if (submitBtn) submitBtn.disabled = true;
+  document.querySelectorAll(".te-submit-btn").forEach((btn) => { btn.disabled = true; });
   if (simulateBtn) simulateBtn.disabled = true;
   if (trackingInterval) {
     clearInterval(trackingInterval);
     trackingInterval = null;
   }
 
-  const item = document.createElement("div");
-  item.className = "rounded-xl bg-white/5 px-4 py-2";
-  item.textContent = "Session locked after reaching the warning limit.";
-  logList.prepend(item);
   document.dispatchEvent(new CustomEvent("examguard:locked"));
 }
 
 if (enableCameraBtn) enableCameraBtn.addEventListener("click", enableCamera);
+
 if (simulateBtn) {
   simulateBtn.addEventListener("click", () => addWarning("simulated", SEVERITY.MINOR, "Simulated monitoring violation"));
-}
-
-if (submitBtn) {
-  submitBtn.addEventListener("click", () => {
-    sessionLocked = true;
-    if (sessionStatus) sessionStatus.textContent = "Submitted";
-    if (faceStatus) faceStatus.textContent = "Stopped";
-    submitBtn.disabled = true;
-    if (simulateBtn) simulateBtn.disabled = true;
-    if (trackingInterval) clearInterval(trackingInterval);
-  });
 }
 
 document.addEventListener("visibilitychange", () => {
@@ -220,17 +218,21 @@ document.addEventListener("visibilitychange", () => {
 
   if (document.hidden) {
     tabHiddenSince = Date.now();
-    tabStatus.textContent = "Tab Switched";
-    tabStatus.className = "eg-badge-danger";
-    tabSwitchCount += 1;
-    const severity = tabSwitchCount >= 3 ? SEVERITY.MODERATE : SEVERITY.MINOR;
-    addWarning("tab_switch", severity, "Tab switching detected");
+    tabStatus.textContent = "Switched";
+    // grace period: don't log unless hidden for > 2s
+    const hiddenAt = tabHiddenSince;
+    setTimeout(() => {
+      if (!document.hidden) return;
+      if (tabHiddenSince !== hiddenAt) return;
+      tabSwitchCount += 1;
+      const severity = tabSwitchCount >= 3 ? SEVERITY.MODERATE : SEVERITY.MINOR;
+      addWarning("tab_switch", severity, "Tab switching detected");
+    }, 2000);
   } else {
     tabHiddenSince = null;
-    tabStatus.textContent = "Tab Active";
-    tabStatus.className = "eg-badge-success";
+    tabStatus.textContent = "Active";
     if (!sessionLocked && sessionStatus && warningCount > 0) {
-      sessionStatus.textContent = "Warning Recorded";
+      sessionStatus.textContent = "Warning recorded";
     }
   }
 });
@@ -241,4 +243,94 @@ document.addEventListener("mouseleave", () => {
   if (now - lastMouseLeaveWarningAt < 8000) return;
   lastMouseLeaveWarningAt = now;
   addWarning("mouse_leave", SEVERITY.MINOR, "Mouse left the exam window");
+});
+
+// Copy/paste + right click blocking (student privacy: do not reveal details)
+document.addEventListener("contextmenu", (e) => {
+  e.preventDefault();
+  addWarning("context_menu", SEVERITY.MINOR, "Context menu blocked");
+});
+
+document.addEventListener("copy", (e) => {
+  e.preventDefault();
+  addWarning("copy_attempt", SEVERITY.MINOR, "Copy attempt blocked");
+});
+
+document.addEventListener("cut", (e) => {
+  e.preventDefault();
+  addWarning("copy_attempt", SEVERITY.MINOR, "Cut attempt blocked");
+});
+
+document.addEventListener("paste", (e) => {
+  e.preventDefault();
+  addWarning("paste_attempt", SEVERITY.MINOR, "Paste attempt blocked");
+});
+
+// Fullscreen enforcement (force + detect exit)
+async function ensureFullscreen() {
+  try {
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+      await document.documentElement.requestFullscreen();
+    }
+  } catch (_) {}
+}
+
+document.addEventListener("examguard:session-started", () => {
+  ensureFullscreen();
+});
+
+document.addEventListener("fullscreenchange", () => {
+  if (sessionLocked) return;
+  if (!document.fullscreenElement) {
+    addWarning("fullscreen_exit", SEVERITY.CRITICAL, "Exited fullscreen during exam");
+  }
+});
+
+// Basic audio loudness detection (demo-only): logs when sustained loud level is detected
+let audioCtx = null;
+let audioAnalyser = null;
+let audioData = null;
+let audioStream = null;
+let loudSince = null;
+
+async function startAudioMonitor() {
+  if (audioCtx || !navigator.mediaDevices?.getUserMedia) return;
+  try {
+    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(audioStream);
+    audioAnalyser = audioCtx.createAnalyser();
+    audioAnalyser.fftSize = 512;
+    audioData = new Uint8Array(audioAnalyser.fftSize);
+    source.connect(audioAnalyser);
+
+    setInterval(() => {
+      if (sessionLocked || !audioAnalyser || !audioData) return;
+      audioAnalyser.getByteTimeDomainData(audioData);
+      let sum = 0;
+      for (let i = 0; i < audioData.length; i += 1) {
+        const v = (audioData[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / audioData.length);
+      const now = Date.now();
+      const loud = rms > 0.22; // conservative threshold
+      if (loud) {
+        if (!loudSince) loudSince = now;
+        if (now - loudSince > 1500) {
+          loudSince = now + 999999; // prevent spam; next warning via cooldown below
+          addWarning("audio_loud", SEVERITY.MODERATE, "Unusually loud audio detected");
+          setTimeout(() => { loudSince = null; }, 8000);
+        }
+      } else {
+        loudSince = null;
+      }
+    }, 300);
+  } catch (_) {
+    // ignore mic monitor failure (preflight handles required mic availability)
+  }
+}
+
+document.addEventListener("examguard:session-started", () => {
+  startAudioMonitor();
 });

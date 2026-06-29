@@ -19,7 +19,7 @@ class Exam extends Model
     public const STATUS_CLOSED = 'closed';
 
     protected $fillable = [
-        'professor_id', 'title', 'instructions', 'time_limit', 'warning_limit', 'status',
+        'professor_id', 'title', 'instructions', 'time_limit', 'warning_limit', 'max_warning_action', 'proctoring_triggers_json', 'status',
         'opens_at', 'closes_at', 'closed_at', 'exam_key',
     ];
 
@@ -29,6 +29,7 @@ class Exam extends Model
             'opens_at' => 'datetime',
             'closes_at' => 'datetime',
             'closed_at' => 'datetime',
+            'proctoring_triggers_json' => 'array',
         ];
     }
 
@@ -66,6 +67,11 @@ class Exam extends Model
     public function isAvailableToStudents(): bool
     {
         return $this->displayStatus() === self::STATUS_ACTIVE;
+    }
+
+    public function acceptsExamKeyEntry(): bool
+    {
+        return in_array($this->displayStatus(), [self::STATUS_ACTIVE, self::STATUS_SCHEDULED], true);
     }
 
     public function displayStatus(): string
@@ -163,6 +169,8 @@ class Exam extends Model
             'instructions' => $this->instructions,
             'timeLimit' => $this->time_limit,
             'warningLimit' => $this->warning_limit,
+            'maxWarningAction' => $this->max_warning_action ?? 'notify',
+            'proctoringTriggers' => $this->proctoring_triggers_json,
             'status' => $this->displayStatus(),
             'examKey' => $this->exam_key,
             'opensAt' => $this->opens_at?->toIso8601String(),
@@ -174,15 +182,33 @@ class Exam extends Model
         ];
     }
 
-    public function toStudentArray(bool $includeAnswers = false): array
+    public function toStudentArray(bool $includeAnswers = false, ?ExamAttempt $attempt = null): array
     {
+        $classroom = $this->relationLoaded('assignments')
+            ? $this->assignments->first()?->classroom
+            : $this->assignedClassroom();
+
         return [
             'id' => $this->id,
             'title' => $this->title,
             'instructions' => $this->instructions,
             'timeLimit' => $this->time_limit,
             'warningLimit' => $this->warning_limit,
+            'maxWarningAction' => $this->max_warning_action ?? 'notify',
+            'proctoringTriggers' => $this->proctoring_triggers_json,
+            'className' => $classroom?->name,
+            'professorName' => $this->relationLoaded('professor')
+                ? $this->professor?->name
+                : null,
+            'questionCount' => $this->questions->count(),
+            'closesAt' => $this->closes_at?->toIso8601String(),
             'questions' => $this->questions->map(fn (Question $q) => $q->toArrayForStudent($includeAnswers))->values(),
+            'attempt' => $attempt ? [
+                'id' => $attempt->id,
+                'status' => $attempt->displayStatus(),
+                'warningCount' => $attempt->warning_count,
+                'startedAt' => $attempt->started_at?->toIso8601String(),
+            ] : null,
         ];
     }
 }

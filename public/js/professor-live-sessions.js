@@ -37,8 +37,14 @@
   }
 
   function formatDuration(seconds) {
-    const mins = Math.floor(Math.max(seconds, 0) / 60);
-    const secs = Math.max(seconds, 0) % 60;
+    const safe = Math.max(Number(seconds) || 0, 0);
+    const mins = Math.floor(safe / 60);
+    const secs = Math.floor(safe % 60);
+    if (mins >= 60) {
+      const hours = Math.floor(mins / 60);
+      const mm = mins % 60;
+      return `${hours}:${String(mm).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
     return `${mins}:${String(secs).padStart(2, '0')}`;
   }
 
@@ -122,12 +128,23 @@
     tbody.innerHTML = list.map((session, index) => {
       const alertClass = session.hasNewViolation ? ' has-alert' : '';
       const selectedClass = selectedAttemptId === session.attemptId ? ' is-selected' : '';
+      const limit = Number(session.warningLimit || 3);
+      const count = Number(session.warningCount || 0);
+      const displayCount = limit > 0 ? Math.min(count, limit) : count;
+      const nearMax = limit > 0 && count === limit - 1;
+      const atMax = limit > 0 && count >= limit;
+      const warnState = atMax ? 'is-max' : (nearMax ? 'is-near' : (count > 0 ? 'is-low' : ''));
+      const warnBadge = limit > 0
+        ? `<span class="pg-warn-badge ${warnState}"><i class="ti ti-alert-triangle"></i> ${displayCount}/${limit}</span>`
+        : '';
       const alertFlag = session.hasNewViolation
         ? '<span class="pg-proctoring-alert-flag"><i class="ti ti-alert-triangle"></i> New</span>'
         : '';
+      const maxFlag = atMax ? '<span class="pg-max-flag" title="Max warnings reached"><i class="ti ti-flag"></i></span>' : '';
+      const rowWarnClass = atMax ? ' is-warn-max' : (nearMax ? ' is-warn-near' : '');
 
       return `
-        <tr class="pg-proctoring-row${alertClass}${selectedClass}"
+        <tr class="pg-proctoring-row${alertClass}${selectedClass}${rowWarnClass}"
             data-attempt-id="${session.attemptId}"
             data-student="${esc(session.studentName).toLowerCase()}"
             data-exam="${esc(session.examTitle).toLowerCase()}"
@@ -137,11 +154,13 @@
             <div class="exam-cell">
               <button type="button" class="pg-proctoring-student-btn">${esc(session.studentName)}</button>
               ${alertFlag}
+              ${maxFlag}
             </div>
           </td>
           <td class="exam-col">
             <div class="exam-cell">
               <span class="pg-exam-cell-title">${esc(session.examTitle)}</span>
+              ${warnBadge}
             </div>
           </td>
           <td>
@@ -170,17 +189,26 @@
       const prev = lastSnapshot[key];
       const currentTotal = violationTotal(session.severitySummary);
 
+      const limit = Number(session.warningLimit || 3);
+      const count = Number(session.warningCount || 0);
+
       if (session.hasNewViolation || (prev && currentTotal > prev.total)) {
-        showAlert(`${session.studentName} triggered a violation during ${session.examTitle}`);
+        showAlert(`${session.studentName} triggered a warning during ${session.examTitle}`);
         window.ExamGuardNotifications?.refresh?.();
       }
 
-      lastSnapshot[key] = { total: currentTotal };
+      if (limit > 0 && count >= limit && (!prev || (prev && prev.warn < limit))) {
+        showAlert(`${session.studentName} reached max warnings (${count}/${limit}) during ${session.examTitle}`);
+        window.ExamGuardNotifications?.refresh?.();
+      }
+
+      lastSnapshot[key] = { total: currentTotal, warn: count };
     });
   }
 
   function renderEvent(event) {
     const time = event.occurredAt ? new Date(event.occurredAt).toLocaleString() : 'Unknown time';
+    const warnNum = event.__warnNum ? `#${event.__warnNum}` : '';
     const snapshot = event.snapshotUrl
       ? `<img src="${esc(event.snapshotUrl)}" alt="Violation snapshot" class="pg-violation-snapshot" loading="lazy">`
       : '';
@@ -189,7 +217,7 @@
       <article class="pg-violation-event pg-severity-${esc(event.severity)}">
         <div class="pg-violation-event-head">
           <span class="pg-severity-pill pg-severity-${esc(event.severity)}">${esc(event.severity)}</span>
-          <span class="pg-violation-event-type">${esc(event.type)}</span>
+          <span class="pg-violation-event-type">${esc(event.type)} ${warnNum}</span>
           <time>${esc(time)}</time>
         </div>
         <p>${esc(event.message)}</p>
@@ -222,8 +250,10 @@
       detailTitle.textContent = attempt.studentName || 'Student session';
       detailMeta.textContent = `${attempt.examTitle || 'Exam'} · ${attempt.severityLabel || 'No violations'}`;
       const events = payload.events || [];
+      // annotate warning number in timeline order (oldest -> newest)
+      const ordered = [...events].reverse().map((ev, i) => ({ ...ev, __warnNum: i + 1 })).reverse();
       detailEvents.innerHTML = events.length
-        ? events.map(renderEvent).join('')
+        ? ordered.map(renderEvent).join('')
         : '<div class="pg-table-empty">No violations recorded for this session yet.</div>';
     } catch (error) {
       detailEvents.innerHTML = `<div class="pg-table-empty">${esc(error.message || 'Unable to load violation log.')}</div>`;

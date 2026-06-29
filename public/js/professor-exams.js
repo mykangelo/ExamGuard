@@ -5,21 +5,27 @@
   const menuUpClass = 'open-up';
   const dialog = () => window.ExamGuardDialog;
 
+  function resetMenuPanel(panel) {
+    panel.classList.remove(menuUpClass);
+  }
+
   function closeAllMenus() {
+    document.querySelector('#view-exams .pg-exams-table-scroll')?.classList.remove('pg-exams-table-scroll--menu-open');
+    document.querySelector('#view-exams .pg-table-wrap')?.classList.remove('pg-exams-table-wrap--menu-open');
     document.querySelectorAll('.pg-row-menu-panel.open').forEach((panel) => {
-      panel.classList.remove(menuOpenClass, menuUpClass);
+      panel.classList.remove(menuOpenClass);
+      resetMenuPanel(panel);
     });
   }
 
   function positionMenuPanel(menuBtn, panel) {
-    panel.classList.remove(menuUpClass);
-    const scrollParent = document.querySelector('.pg-body');
-    const bottomLimit = scrollParent
-      ? scrollParent.getBoundingClientRect().bottom
-      : window.innerHeight;
+    resetMenuPanel(panel);
 
-    const rect = panel.getBoundingClientRect();
-    if (rect.bottom > bottomLimit - 8) {
+    const viewportBottom = window.innerHeight - 8;
+    const panelHeight = panel.offsetHeight || 220;
+    const btnRect = menuBtn.getBoundingClientRect();
+
+    if (btnRect.bottom + 4 + panelHeight > viewportBottom) {
       panel.classList.add(menuUpClass);
     }
   }
@@ -263,6 +269,8 @@
         const isOpen = panel.classList.contains(menuOpenClass);
         closeAllMenus();
         if (!isOpen) {
+          document.querySelector('#view-exams .pg-exams-table-scroll')?.classList.add('pg-exams-table-scroll--menu-open');
+          document.querySelector('#view-exams .pg-table-wrap')?.classList.add('pg-exams-table-wrap--menu-open');
           panel.classList.add(menuOpenClass);
           positionMenuPanel(menuBtn, panel);
         }
@@ -337,6 +345,8 @@
       const row = titleBtn.closest('.pg-exam-row');
       if (row) window.ExamGuardProfessor?.showExamDetail?.(row, { pushHistory: true });
     });
+    document.querySelector('.pg-exams-table-scroll')?.addEventListener('scroll', closeAllMenus, { passive: true });
+    window.addEventListener('resize', closeAllMenus);
   }
 
   document.addEventListener('click', closeAllMenus);

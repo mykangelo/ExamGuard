@@ -122,6 +122,16 @@
 
     if (!hash) return;
 
+    if (window.ExamGuardStudent?.switchView) {
+      const viewName = hash.replace(/^#/, '');
+      if (viewName.startsWith('class-')) {
+        window.ExamGuardStudent.switchView('class', { classId: Number(viewName.slice(6)) });
+      } else {
+        window.ExamGuardStudent.switchView(viewName || 'home');
+      }
+      return;
+    }
+
     const target = document.querySelector(hash);
     if (!target) return;
 

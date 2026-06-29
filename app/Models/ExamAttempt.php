@@ -118,4 +118,22 @@ class ExamAttempt extends Model
 
         return $summary;
     }
+
+    /** Server-authoritative warning total (never trust client submit). */
+    public function authoritativeWarningCount(): int
+    {
+        if ($this->relationLoaded('violationEvents')) {
+            return $this->violationEvents->count();
+        }
+
+        return (int) $this->violationEvents()->count();
+    }
+
+    public function syncWarningCountFromEvents(): void
+    {
+        $count = $this->authoritativeWarningCount();
+        if ((int) $this->warning_count !== $count) {
+            $this->forceFill(['warning_count' => $count])->save();
+        }
+    }
 }

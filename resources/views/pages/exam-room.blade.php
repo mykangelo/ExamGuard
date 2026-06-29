@@ -35,7 +35,7 @@ data-role="student"
             <div class="flex justify-between rounded-xl bg-white/5 px-4 py-2"><span>Session</span><strong id="sessionStatus">In Progress</strong></div>
         </div>
         <button class="eg-btn-secondary w-full" id="simulateBtn">Simulate Violation</button>
-        <div id="logList" class="space-y-2 text-sm"><div class="rounded-xl bg-white/5 px-4 py-2">No violations recorded.</div></div>
+        <div id="logList" class="space-y-2 text-sm"><div class="rounded-xl bg-white/5 px-4 py-2" data-empty>No violations recorded.</div></div>
     </section>
 
     <section class="eg-panel">
