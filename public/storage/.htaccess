@@ -1,0 +1,4 @@
+# Uploaded files are served by serve.php (see public/.htaccess).
+# Do not add RewriteRule redirects to ../../storage — InfinityFree returns HTTP 500.
+
+Options -Indexes

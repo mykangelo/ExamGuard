@@ -39,10 +39,32 @@ class AttemptController extends Controller
         $questionCount = $exam->questions()->count();
         $now = now();
 
-        if ($existing?->isInProgress()) {
-            $existing->update(['last_heartbeat_at' => $now]);
+        if ($existing && $existing->status !== ExamAttempt::STATUS_SUBMITTED) {
+            if ($existing->isViolationLocked($exam)) {
+                return response()->json([
+                    'error' => 'Maximum proctoring violations exceeded. You cannot continue this exam.',
+                    'code' => 'violation_exceeded',
+                ], 403);
+            }
 
-            return response()->json(['attempt' => $this->attemptPayload($existing, $exam)]);
+            $limitSeconds = max(0, (int) $exam->time_limit * 60);
+            $clockExpired = $limitSeconds > 0
+                && $existing->started_at
+                && $existing->started_at->lte($now->copy()->subSeconds($limitSeconds));
+
+            $updates = [
+                'last_heartbeat_at' => $now,
+                'status' => ExamAttempt::STATUS_IN_PROGRESS,
+            ];
+
+            // Wall clock passed the exam limit — restart the timer on next entry.
+            if ($clockExpired) {
+                $updates['started_at'] = $now;
+            }
+
+            $existing->update($updates);
+
+            return response()->json(['attempt' => $this->attemptPayload($existing->fresh(), $exam)]);
         }
 
         $attempt = ExamAttempt::create([
@@ -151,6 +173,15 @@ class AttemptController extends Controller
 
         $attempt->update(['last_heartbeat_at' => now()]);
         $attempt->syncWarningCountFromEvents();
+        $attempt->refresh();
+
+        $warningLimit = (int) ($exam->warning_limit ?? 3);
+        if ($attempt->warning_count >= $warningLimit) {
+            $attempt->update([
+                'status' => ExamAttempt::STATUS_DISCONNECTED,
+                'last_heartbeat_at' => now(),
+            ]);
+        }
 
         return response()->json([
             'event' => $event->toArray(),

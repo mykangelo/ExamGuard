@@ -214,14 +214,7 @@
     if (department) department.value = user.department || '';
 
     ui?.renderAvatarButton?.(document.getElementById('settingsAvatarBtn'), user);
-    const navAvatar = document.querySelector('.pg-floating-profile .pg-avatar');
-    if (navAvatar) {
-      if (user.avatarUrl) {
-        navAvatar.innerHTML = `<img src="${user.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-      } else {
-        navAvatar.textContent = initials(user.name);
-      }
-    }
+    ui?.renderNavAvatarButton?.(document.querySelector('.pg-floating-profile .pg-avatar'), user);
 
     const emailWrap = document.querySelector('#settingsProfileForm .pg-settings-email-wrap');
     if (emailWrap) {
@@ -258,8 +251,8 @@
     if (warningLimit) warningLimit.value = String(prefs.defaultWarningLimit ?? 3);
   }
 
-  function bindProfileUi() {
-    const root = document.getElementById('profileView');
+  function bindSettingsUi() {
+    const root = document.getElementById('settingsView');
     if (!root || root.dataset.uiBound === '1') return;
     root.dataset.uiBound = '1';
     const ui = window.ExamGuardSettingsUI;
@@ -280,7 +273,7 @@
   }
 
   function clearAllFormErrors() {
-    document.querySelectorAll('#profileView form, #settingsView form').forEach(clearFormErrors);
+    document.querySelectorAll('#settingsView form').forEach(clearFormErrors);
   }
 
   async function loadUser() {
@@ -294,14 +287,8 @@
   }
 
   async function initProfile() {
-    hideAlert();
-    clearAllFormErrors();
-    try {
-      await loadUser();
-      bindProfileUi();
-    } catch (error) {
-      showAlert(error.message || 'Unable to load profile.', 'error');
-    }
+    await initSettings();
+    window.ExamGuardSettings?.showSection?.('profile');
   }
 
   async function initSettings() {
@@ -309,7 +296,7 @@
     clearAllFormErrors();
     try {
       await loadUser();
-      bindProfileUi();
+      bindSettingsUi();
 
       // Settings sub-nav: show one section at a time (professor settings tab)
       const root = document.getElementById('settingsView');

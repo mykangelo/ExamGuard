@@ -3536,8 +3536,8 @@ html, body {
 </script>
 <script src="/js/api-client.js?v=11"></script>
 <script src="/js/professor-dialog.js?v=1"></script>
-<script src="/js/settings-shared.js?v=2"></script>
-<script src="/js/professor-settings.js?v=5"></script>
+<script src="/js/settings-shared.js?v=3"></script>
+<script src="/js/professor-settings.js?v=6"></script>
 <script src="/js/professor-notifications.js?v=2"></script>
 <script src="/js/professor-sidebar-live-widget.js?v=1"></script>
 <script src="/js/create-exam.js?v=18"></script>

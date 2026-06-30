@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,6 +14,12 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $appUrl = (string) config('app.url', '');
+        if (preg_match('#^https?:https?://#i', $appUrl)) {
+            $appUrl = preg_replace('#^(https?):https?://#i', '$1://', $appUrl);
+            URL::forceRootUrl(rtrim($appUrl, '/'));
+        }
+
         /*
          * Login: 10 attempts / minute per IP.
          * Fine-grained per-account lockout is handled inside AuthController.

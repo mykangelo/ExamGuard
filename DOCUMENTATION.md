@@ -14,14 +14,16 @@ ExamGuard is an online examination and proctoring platform. Professors create ex
 6. [Authentication and authorization](#6-authentication-and-authorization)
 7. [API reference](#7-api-reference)
 8. [Application features](#8-application-features)
-9. [Frontend architecture](#9-frontend-architecture)
-10. [Proctoring system](#10-proctoring-system)
-11. [Exam lifecycle](#11-exam-lifecycle)
-12. [Key code flows](#12-key-code-flows)
-13. [Configuration](#13-configuration)
-14. [Testing](#14-testing)
-15. [Legacy folder](#15-legacy-folder)
-16. [Deployment notes](#16-deployment-notes)
+9. [AJAX and JSON](#9-ajax-and-json)
+10. [Frontend architecture](#10-frontend-architecture)
+11. [Proctoring system](#11-proctoring-system)
+12. [Exam lifecycle](#12-exam-lifecycle)
+13. [Key code flows](#13-key-code-flows)
+14. [Configuration](#14-configuration)
+15. [Testing](#15-testing)
+16. [Legacy folder](#16-legacy-folder)
+17. [Deployment notes](#17-deployment-notes)
+18. [InfinityFree (free hosting)](#18-infinityfree-free-hosting)
 
 ---
 
@@ -129,6 +131,7 @@ ExamGuard/
 │   │   └── Middleware/
 │   │       └── EnsureRole.php
 │   ├── Models/               # Eloquent models
+│   ├── Support/              # PublicStorageUrl helper
 │   ├── Providers/
 │   └── Services/             # Business logic (notifications)
 ├── bootstrap/app.php         # Middleware aliases, app bootstrap
@@ -138,6 +141,9 @@ ExamGuard/
 │   └── seeders/
 ├── public/
 │   ├── js/                   # Frontend application scripts
+│   ├── storage/
+│   │   ├── serve.php         # Serves uploads when storage:link unavailable
+│   │   └── .htaccess
 │   └── index.php             # Web entry point
 ├── resources/
 │   ├── css/app.css           # Tailwind entry (Vite)
@@ -156,7 +162,7 @@ ExamGuard/
 | Path | Role |
 |------|------|
 | `routes/web.php` | Single route file for pages and API |
-| `public/js/api-client.js` | Central `ExamGuardApi` fetch wrapper |
+| `public/js/api-client.js` | Central `ExamGuardApi` fetch wrapper — see [§9](#9-ajax-and-json) |
 | `resources/views/pages/professor.blade.php` | Professor SPA-like shell (all views in one page) |
 | `resources/views/pages/student.blade.php` | Student dashboard shell |
 | `resources/views/pages/take-exam.blade.php` | Timed exam + preflight + proctoring |
@@ -189,7 +195,7 @@ ExamGuard/
 
 ### Design patterns
 
-- **Monolithic Laravel app** — pages and JSON API share authentication and models.
+- **Monolithic Laravel app** — pages and JSON API share authentication and models. Client-server contract is documented in [§9 AJAX and JSON](#9-ajax-and-json).
 - **Fat views, modular JS** — large Blade files embed CSS; behavior split across focused JS files.
 - **Session-based auth** — not JWT; `credentials: "same-origin"` on all API calls.
 - **Role-based access** — `professor` and `student` roles on `users.role`; middleware `role:professor`.
@@ -365,7 +371,7 @@ Single-page shell with sidebar navigation. Views toggled via `data-view` attribu
 | **Overall results** | Cross-exam performance summary |
 | **Proctoring** | Live sessions table (`professor-live-sessions.js`) |
 | **Violations** | Students with proctoring flags |
-| **Settings** | Profile, password, notifications, workspace defaults |
+| **Settings** | Profile photo, password, notifications, workspace defaults (`professor-settings.js` binds UI to `#settingsView`) |
 | **Help** | FAQ-style help content |
 
 **Sidebar live widget** (`professor-sidebar-live-widget.js`) — shows active exam when students have recent heartbeats.
@@ -374,12 +380,16 @@ Single-page shell with sidebar navigation. Views toggled via `data-view` attribu
 
 | View | Purpose |
 |------|---------|
-| **Home** | Upcoming exams, quick actions |
+| **Home** | Upcoming exams, live banner, activity stream, quick actions |
 | **Calendar** | Month/week schedule with exam pills |
 | **Exam room** | Enter exam key to access unassigned exams |
 | **Results** | Submitted attempt scores |
-| **Settings** | Profile, password, notifications |
+| **Settings** | Profile photo, password, notifications (`student-settings.js`, `settings-shared.js`) |
 | **Class** | Per-class exam list |
+
+**Student notifications** (`student-notifications.js`): in-app bell for `exam_assigned`, `class_joined`, `exam_deleted`, `class_deleted`. Joining a class shows a toast (not `alert()`) and creates a `class_joined` notification.
+
+**Violation lock:** when `warning_count >= warning_limit` on an unsubmitted attempt, the exam shows **Violations exceeded** on the dashboard and API blocks re-entry (`403`, `code: violation_exceeded`). See [§11 Proctoring](#11-proctoring-system).
 
 Data loaded via `ExamGuardApi.exams()`, `ExamGuardApi.classes()`, etc. in `student.js`.
 
@@ -397,7 +407,415 @@ Legacy-style monitoring panel for entering exams by key (simpler flow than full 
 
 ---
 
-## 9. Frontend architecture
+## 9. AJAX and JSON
+
+ExamGuard uses **AJAX** in the classic sense: the browser calls Laravel `/api/*` routes with **`fetch()`**, receives **JSON**, and updates the page **without a full reload**. There is no jQuery, Axios, or React data layer — one central wrapper handles almost everything.
+
+### How AJAX is handled and used
+
+**The end-to-end pattern:**
+
+```
+Blade page loads (HTML)  →  JS calls ExamGuardApi.*()  →  fetch("/api/...")  →  Laravel returns JSON  →  JS updates the DOM
+```
+
+ExamGuard is **not** a single-page application framework app (no React/Vue router). It uses a **hybrid model**:
+
+| Phase | What happens |
+|-------|----------------|
+| **First paint** | Blade renders the layout, tables, forms, and inline CSS. Some data is embedded server-side (e.g. professor exam table on first load). |
+| **After load** | JavaScript calls `/api/*` to load or change data. The DOM is updated from JSON — no full page reload for most dashboard actions. |
+| **Mutations** | Create, update, delete, submit, and proctoring events are sent as JSON POST/PUT/DELETE requests. |
+| **Polling** | Live professor views and exam heartbeats re-call the API on a timer (no WebSockets). |
+
+All API traffic is **same-origin AJAX** (`fetch`) with the **Laravel session cookie** (not JWT).
+
+**What we deliberately do *not* use for API calls:** jQuery `$.ajax`, Axios, Inertia, Livewire, or a separate API server. The only exceptions are a few **raw `fetch` calls** for email resend and session sanity checks (see [Where AJAX is used](#where-ajax-is-used-by-feature)).
+
+### Mental model (five rules)
+
+1. **One client** — `window.ExamGuardApi` in `public/js/api-client.js` wraps every authenticated call.
+2. **One auth model** — session cookie + `X-CSRF-TOKEN` header (no bearer tokens).
+3. **One data format** — JSON request bodies and JSON responses (`Content-Type` / `Accept: application/json`).
+4. **One route file** — `routes/web.php` maps `/api/*` to `app/Http/Controllers/Api/*.php`.
+5. **Per-feature DOM updates** — each JS file (`student.js`, `take-exam.js`, etc.) owns rendering after JSON returns; there is no global state store.
+
+### Architecture diagram
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ Browser                                                           │
+│                                                                   │
+│  Blade page (HTML)          public/js/*.js                        │
+│       │                            │                              │
+│       │  first paint               │  ExamGuardApi.request()      │
+│       └────────────────────────────┼──► fetch("/api/...")         │
+│                                    │     credentials: same-origin │
+│                                    │     X-CSRF-TOKEN header      │
+│                                    │     Accept: application/json │
+└────────────────────────────────────┼──────────────────────────────┘
+                                     │ HTTP
+┌────────────────────────────────────▼──────────────────────────────┐
+│ Laravel  routes/web.php  →  app/Http/Controllers/Api/*.php        │
+│          response()->json([...])  ←  Model::*Array() serializers │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### Central API client (`public/js/api-client.js`)
+
+Almost every authenticated AJAX call goes through **`window.ExamGuardApi`**.
+
+| Mechanism | Detail |
+|-----------|--------|
+| Transport | Native **`fetch()`** (no jQuery, no Axios) |
+| Auth | `credentials: "same-origin"` — sends session cookie |
+| CSRF | `X-CSRF-TOKEN` from `<meta name="csrf-token">` in `layouts/app.blade.php` |
+| Request body | `Content-Type: application/json` + `JSON.stringify(payload)` for POST/PUT/DELETE |
+| Response | `Accept: application/json`; body parsed with `response.json()` |
+| Errors | Non-2xx → thrown `Error` with `.status`, `.code`, `.errors`, optional `.exam`, lockout fields |
+| File upload | `uploadRequest()` — `FormData` for avatar only (no `Content-Type` header; browser sets multipart boundary) |
+
+Core `request()` helper:
+
+```javascript
+async function request(path, options = {}) {
+  const response = await fetch(path, {
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "X-CSRF-TOKEN": csrfToken(),
+      ...(options.headers || {}),
+    },
+    ...options,
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw enrichedError(result);
+  return result;
+}
+```
+
+`ExamGuardApi` exposes one method per endpoint (login, `exams()`, `submitExam()`, `liveSessions()`, etc.). See [§7 API reference](#7-api-reference) for the full route list.
+
+### Calling the API from JavaScript
+
+Every feature script imports nothing — it calls methods on the global `ExamGuardApi` object.
+
+**Read data (GET):**
+
+```javascript
+const { exams } = await ExamGuardApi.exams();
+const { user } = await ExamGuardApi.me();
+const { exam } = await ExamGuardApi.exam(examId);
+```
+
+**Write data (POST / PUT / DELETE):**
+
+```javascript
+await ExamGuardApi.joinClass(classCode);
+await ExamGuardApi.createExam(payload);
+await ExamGuardApi.submitExam(examId, { answers, startedAt });
+```
+
+POST and PUT bodies are built with `JSON.stringify(...)` inside `api-client.js` — callers pass plain JavaScript objects.
+
+**Parallel load (student dashboard):**
+
+```javascript
+// student.js — loadDashboard()
+const [{ user }, { classes }, { exams }] = await Promise.all([
+  ExamGuardApi.me(),
+  ExamGuardApi.classes(),
+  ExamGuardApi.exams(),
+]);
+state.user = user;
+state.classes = classes || [];
+state.exams = exams || [];
+// then render home, calendar, results from state
+```
+
+**Indirect API call (proctoring):**
+
+`monitoring.js` does not call `fetch` directly. During an exam, `take-exam.js` sets `window.ExamGuardSession`, and monitoring code calls:
+
+```javascript
+await window.ExamGuardSession.reportViolation({
+  type: 'tab_switch',
+  snapshot: base64Image,
+  occurredAt: new Date().toISOString(),
+});
+```
+
+That wrapper internally calls `ExamGuardApi.reportViolation(...)`.
+
+### Error handling in the UI
+
+When the server returns a non-2xx status, `request()` throws a standard `Error` enriched with API fields:
+
+| Property | Meaning |
+|----------|---------|
+| `error.message` | User-facing text (SQL errors are sanitized to a generic message) |
+| `error.status` | HTTP status code (401, 403, 409, 429, …) |
+| `error.errors` | Laravel validation object `{ field: ["message"] }` — first field message is shown |
+| `error.locked_out`, `error.retry_after` | Login brute-force lockout (`login.js` shows countdown) |
+| `error.needs_verification`, `error.email` | Unverified email — redirect to verify flow |
+
+UI scripts catch these and surface them via `ExamGuardDialog` (alerts/toasts), inline form errors, or empty-state messages. Example from `professor-exams.js`:
+
+```javascript
+try {
+  await ExamGuardApi.deleteExam(examId);
+  dialog()?.toast('Exam deleted.', 'success');
+} catch (error) {
+  await dialog()?.alert({
+    type: 'error',
+    title: 'Unable to delete',
+    message: error.message || 'This exam could not be deleted.',
+  });
+}
+```
+
+### Typical AJAX flows by area
+
+#### Session guard (every dashboard page)
+
+`auth-guard.js` runs immediately when professor or student Blade loads:
+
+```javascript
+try {
+  const { user } = await ExamGuardApi.me();
+  if (requiredRole && user.role !== requiredRole) redirectForRole(user.role);
+} catch {
+  location.replace('/login');
+}
+```
+
+If the session cookie is missing or expired, the user never sees dashboard data — they go to login.
+
+#### Student dashboard — mostly AJAX-driven
+
+Unlike the professor exams table, the **student UI loads almost all data via AJAX** on init. `student.js` → `loadDashboard()` fetches user, classes, and exams in parallel, then renders home, calendar, class views, and results from in-memory `state`. Joining a class or entering an exam key triggers additional POST requests without reloading the page.
+
+#### Professor dashboard — mixed (Blade + AJAX)
+
+| Concern | Approach |
+|---------|----------|
+| Initial exam table | **Server-rendered** — `PageController::professor()` passes `$exams` to Blade |
+| Row actions (duplicate, delete, schedule, close) | **AJAX** — `professor-exams.js`; DOM row removed or page reloaded after delete |
+| Create / edit exam | **AJAX** — `create-exam.js` sends nested exam JSON to `POST` / `PUT /api/exams` |
+| Classes and assignments | **AJAX** — `professor-classes.js` |
+| Live sessions + sidebar widget | **AJAX polling every 4s** — `ExamGuardApi.liveSessions()` |
+| Notifications | **AJAX on demand** — when user opens the bell panel |
+
+#### Take exam — continuous AJAX
+
+`take-exam.js` drives the full exam session over the API:
+
+1. `GET /api/exams/{id}` — questions + existing `in_progress` attempt (resume skips preflight).
+2. `POST .../attempts/start` — create or resume attempt; sets `window.ExamGuardSession`.
+3. `POST .../heartbeat` — every **20 seconds** while the exam runs (keeps professor live view accurate).
+4. `POST .../violations` — proctoring events from `monitoring.js`.
+5. `POST .../attempts` — submit `{ answers, startedAt }`; show success modal → redirect to results.
+
+#### Auth pages
+
+`login.js` and `register.js` POST credentials via `ExamGuardApi.login()` / `register()`, then `location.replace()` to the role dashboard on success. No dashboard data is pre-fetched on those pages.
+
+### Server-side JSON (`app/Http/Controllers/Api/`)
+
+All `/api/*` handlers return **`Illuminate\Http\JsonResponse`** via `response()->json(...)`.
+
+| Pattern | Example |
+|---------|---------|
+| Success wrapper | `{ "exams": [...] }`, `{ "user": {...} }`, `{ "attempt": {...} }` |
+| Simple ack | `{ "ok": true }` |
+| Error | `{ "error": "Human-readable message." }` with 4xx/5xx status |
+| Validation | Laravel validation → `{ "message": "...", "errors": { "field": ["..."] } }` — client reads first field error |
+| Auth extras | Login may return `locked_out`, `retry_after`, `needs_verification`, `email` |
+
+**Role middleware** (`EnsureRole`) returns JSON for API routes:
+
+```php
+if ($request->expectsJson() || $request->is('api/*')) {
+    return response()->json(['error' => 'Not authorized.'], 403);
+}
+```
+
+**Exception rendering:** `bootstrap/app.php` renders validation/auth failures as JSON when the path is `api/*` or the request `expectsJson()`.
+
+Controllers do **not** return raw Eloquent models. They use explicit serializers on models:
+
+| Method | Model | Used for |
+|--------|-------|----------|
+| `toAuthArray()` | `User` | Login, `/api/auth/me`, profile updates |
+| `toProfessorArray()` | `Exam` | Professor exam list/detail (includes correct answers) |
+| `toStudentArray()` | `Exam` | Student exam list/detail (hides answers until submit) |
+| `toArrayWithAnswers()` | `Question` | Professor question payload |
+| `toArrayForStudent()` | `Question` | Student take-exam payload |
+| `attemptPayload()` | `ExamAttempt` | Start session, submit, heartbeat context |
+| `toArray()` | `ViolationEvent` | Violation reports and professor feeds |
+
+### JSON stored in MySQL
+
+Some columns hold JSON blobs; Eloquent **casts** them to PHP arrays, and API serializers expose them as JSON fields:
+
+| Column | Table | Purpose |
+|--------|-------|---------|
+| `preferences` | `users` | Notification and UI preferences from settings |
+| `answers` | `exam_attempts` | Submitted multiple-choice indices |
+| `proctoring_triggers_json` | `exams` | Per-exam proctoring trigger config |
+| `meta_json` | `violation_events` | Optional client metadata on violations |
+
+### Client-only JSON (`sessionStorage`)
+
+Not sent to the server unless saved via an API call:
+
+| Key / usage | File | Purpose |
+|-------------|------|---------|
+| `examguard:create-exam-work` | `create-exam.js` | Draft exam builder state between steps |
+| `examguard:pending-exam-key` | `student.js` | Exam key entered before dashboard load completes |
+| `examguard:take-exam-id` | `route-state.js` | Preserve `examId` across navigation |
+| Professor view boot | `professor.js` | Last active sidebar view |
+
+### Where AJAX is used (by feature)
+
+#### Authentication (guest pages)
+
+| File | Endpoints | Behavior |
+|------|-----------|----------|
+| `login.js` | `POST /api/auth/login` | JSON body `{ email, password, role, website }`; redirects on success |
+| `register.js` | `POST /api/auth/register` | Same pattern; may return `needs_verification` |
+| `login.js`, `register.js`, `verify-email.blade.php` | `POST /api/email/resend` | **Raw `fetch`** (not `ExamGuardApi`) — resend verification email |
+
+#### Protected shell (all dashboards)
+
+| File | Endpoints | Behavior |
+|------|-----------|----------|
+| `auth-guard.js` | `GET /api/auth/me` | Runs on load; redirects to `/login` if session invalid |
+| `professor.js`, `student.js` | `POST /api/auth/logout` | Logout then redirect |
+
+#### Professor dashboard
+
+| File | Endpoints | Behavior |
+|------|-----------|----------|
+| `PageController::professor()` | *(none on first load)* | **Server-rendered** exam table HTML from Blade |
+| `professor-exams.js` | `duplicate`, `delete`, `schedule`, `close` | Row actions; DOM updated or page reload after delete |
+| `create-exam.js` | `GET/POST/PUT /api/exams`, `GET /api/classes` | Full exam CRUD payload as nested JSON (title, questions, choices, proctoring settings) |
+| `professor-classes.js` | `professor/classes`, `classes`, `assignments` | Load classes + exams; create class; assign exam |
+| `professor-live-sessions.js` | `GET /api/professor/live-sessions`, `attempts/{id}/violations` | **Poll every 4s** while view active |
+| `professor-sidebar-live-widget.js` | `GET /api/professor/live-sessions` | **Poll every 4s** in sidebar |
+| `professor-proctoring.js` | `GET /api/professor/violations` | Violation records list (filter by severity query param) |
+| `professor-notifications.js` | `GET/PUT /api/professor/notifications` | Load on panel open; mark read |
+| `professor-settings.js`, `settings-shared.js` | `me`, `profile`, `password`, `preferences`, `avatar`, `logout-all`, `account` | Settings forms |
+
+#### Student dashboard
+
+| File | Endpoints | Behavior |
+|------|-----------|----------|
+| `student.js` | `me`, `classes`, `exams` | **`loadDashboard()`** — `Promise.all` on page load; renders home, calendar, results from JSON |
+| `student.js` | `POST /api/classes/join` | Join class by code |
+| `student.js` | `POST /api/exams/access-by-key` | Exam room key entry |
+| `student-notifications.js` | `GET/PUT /api/student/notifications` | Load on panel open |
+| `student-settings.js` | Same auth endpoints as professor settings | Profile / password / preferences |
+
+#### Take exam
+
+| File | Endpoints | Behavior |
+|------|-----------|----------|
+| `take-exam.js` | `GET /api/exams/{id}` | Load exam + questions + existing `in_progress` attempt |
+| `take-exam.js` | `POST .../attempts/start` | Start or resume session |
+| `take-exam.js` | `POST .../heartbeat` | **Every 20s** while exam active |
+| `take-exam.js` | `POST .../violations` | Proctoring events from `monitoring.js` via `ExamGuardSession.reportViolation()` |
+| `take-exam.js` | `POST .../attempts` | Submit `{ answers: [...], startedAt }` |
+| `take-exam.js` | `GET /api/auth/me`, `GET /` | **Raw `fetch`** — session sanity check before starting |
+| `monitoring.js` | *(indirect)* | Calls `window.ExamGuardSession.reportViolation({ type, snapshot, ... })` — no direct `fetch` |
+
+### Polling and recurring AJAX
+
+Real-time features use **short polling**, not WebSockets or Server-Sent Events:
+
+| Interval | File | Endpoint | Purpose |
+|----------|------|----------|---------|
+| 4s | `professor-live-sessions.js`, `professor-sidebar-live-widget.js` | `GET /api/professor/live-sessions` | Live student sessions (heartbeat window ~18s server-side) |
+| 20s | `take-exam.js` | `POST .../heartbeat` | Keep attempt alive for professor live view |
+| On demand | `student-notifications.js`, `professor-notifications.js` | notifications APIs | When user opens notification panel |
+| 1s | `take-exam.js` | *(local only)* | Exam countdown timer — **not** an API call |
+
+### What is *not* AJAX
+
+These parts of the app do **not** load or save data through `/api/*`:
+
+| Area | How it works instead |
+|------|----------------------|
+| Marketing pages (`/`, `/tour`, `/pricing`, …) | Static Blade + Vite CSS only |
+| Professor exam table (first visit) | PHP renders rows in Blade from `PageController` |
+| Exam countdown during take-exam | Local `setInterval` in `take-exam.js` |
+| Draft exam builder mid-step | `sessionStorage` until user saves via `createExam()` |
+| CSS, fonts, MediaPipe CDN | Static assets — not API calls |
+
+Login and register **submit** via AJAX but do not pre-load API data before the user acts.
+
+### Example JSON payloads
+
+**Create / update exam** (`create-exam.js` → `POST|PUT /api/exams`):
+
+```json
+{
+  "title": "Midterm",
+  "instructions": "...",
+  "timeLimit": 60,
+  "warningLimit": 3,
+  "maxWarningAction": "auto_submit",
+  "proctoringTriggers": { "tab_switch": true, "no_face": true },
+  "questions": [
+    {
+      "prompt": "Question text",
+      "choices": ["A", "B", "C", "D"],
+      "correctChoice": 2
+    }
+  ]
+}
+```
+
+**Submit attempt** (`take-exam.js` → `POST /api/exams/{id}/attempts`):
+
+```json
+{
+  "answers": [0, 2, 1, 3],
+  "startedAt": "2026-06-29T14:00:00.000Z"
+}
+```
+
+**Report violation** (`monitoring.js` → `POST .../violations`):
+
+```json
+{
+  "type": "tab_switch",
+  "severity": "minor",
+  "message": "Tab switch detected",
+  "snapshot": "data:image/jpeg;base64,...",
+  "occurredAt": "2026-06-29T14:05:00.000Z"
+}
+```
+
+**Response** includes authoritative server count:
+
+```json
+{
+  "event": { "id": 12, "type": "tab_switch", "severity": "minor", "message": "..." },
+  "warningCount": 2
+}
+```
+
+### Legacy reference
+
+`legacy/api-client.js` and `legacy/server.js` used the same **`fetch` + `JSON.stringify`** pattern against a Node SQLite server. The current Laravel app mirrors that contract under `/api/*`.
+
+---
+
+## 10. Frontend architecture
+
+> For AJAX/JSON transport, serializers, polling, and per-file API usage, see [§9 AJAX and JSON](#9-ajax-and-json).
 
 ### Global objects
 
@@ -411,23 +829,9 @@ Legacy-style monitoring panel for entering exams by key (simpler flow than full 
 | `window.ExamGuardSession` | `take-exam.js` | Active attempt + `reportViolation()` |
 | `window.ExamGuardProctoring` | `take-exam.js` | Max-warning action and triggers |
 
-### API client pattern
+### API client (summary)
 
-```javascript
-// public/js/api-client.js
-async function request(path, options = {}) {
-  const response = await fetch(path, {
-    credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRF-TOKEN": csrfToken(),
-      ...
-    },
-    ...options,
-  });
-  // throws Error with .status, .code on failure
-}
-```
+All HTTP calls use `window.ExamGuardApi` in `public/js/api-client.js`. See [§9](#9-ajax-and-json) for headers, error handling, upload flow, and endpoint mapping.
 
 ### Professor view switching
 
@@ -452,7 +856,7 @@ function switchView(viewName, options = {}) {
 
 ---
 
-## 10. Proctoring system
+## 11. Proctoring system
 
 ### Client side (`monitoring.js`)
 
@@ -475,11 +879,21 @@ Violations call `window.ExamGuardSession.reportViolation({ type, snapshot, ... }
 3. Auto-escalates repeated minor violations of same type.
 4. Stores `ViolationEvent` with optional snapshot image in `storage/app/public/violation-snapshots/`.
 5. Syncs `warning_count` on attempt from events (authoritative count).
-6. Returns updated `warningCount` to client.
+6. At max warnings: sets attempt `status` to `disconnected` and blocks further session activity.
+7. Returns updated `warningCount` to client.
 
-### Max warnings
+### Max warnings & violation lock
 
-Configured per exam (`warning_limit`, `max_warning_action`). Client shows escalation UI and may auto-submit or lock based on `max_warning_action`.
+Configured per exam (`warning_limit`, `max_warning_action`). When `warning_count >= warning_limit`:
+
+| Layer | Behavior |
+|-------|----------|
+| **Server** | `ExamAttempt::isViolationLocked()` — true for unsubmitted attempts at/above limit |
+| **API** | `AttemptController::start()`, `ExamController::show()`, `accessByKey()` return `403` + `code: violation_exceeded` |
+| **Student UI** | No live banner / “Enter now”; stream shows **Violations exceeded**; `goToExam()` blocked |
+| **Take exam** | `renderExam()` and resume path show blocked screen |
+
+Client shows escalation UI during the session; on max warnings the session ends per `max_warning_action` (disconnect / notify).
 
 ### Demo mode
 
@@ -487,7 +901,7 @@ Configured per exam (`warning_limit`, `max_warning_action`). Client shows escala
 
 ---
 
-## 11. Exam lifecycle
+## 12. Exam lifecycle
 
 ### Status values
 
@@ -517,7 +931,7 @@ Configured per exam (`warning_limit`, `max_warning_action`). Client shows escala
 
 ---
 
-## 12. Key code flows
+## 13. Key code flows
 
 ### Start exam session (student)
 
@@ -555,15 +969,19 @@ professor-sidebar-live-widget.js / professor-live-sessions.js
 ### Student notifications
 
 ```
-StudentNotificationService::notifyExamAssigned()
-  → triggered when exam assigned to class
+StudentNotificationService::notifyExamAssigned()   — exam assigned to class
+StudentNotificationService::notifyClassJoined()    — student joins class (new enrollment)
+StudentNotificationService::notifyClassDeleted() — professor deletes class
   → creates student_notifications rows
-  → student-notifications.js polls GET /api/student/notifications
+  → student-notifications.js loads GET /api/student/notifications
+  → join class also shows ExamGuardDialog.toast() on student dashboard
 ```
+
+Notification types: `exam_assigned`, `class_joined`, `exam_deleted`, `class_deleted`.
 
 ---
 
-## 13. Configuration
+## 14. Configuration
 
 ### Environment (`.env`)
 
@@ -574,6 +992,17 @@ StudentNotificationService::notifyExamAssigned()
 | `PROCTORING_DEMO_MODE` | Show demo proctoring disclaimer |
 | `SEED_PROFESSOR_PASSWORD` | Override seed professor password |
 | `SEED_STUDENT_PASSWORD` | Override seed student password |
+| `MAIL_*` | SMTP for email verification (Brevo / SendGrid) — see [docs/SMTP.md](docs/SMTP.md) |
+
+### Email verification (SMTP)
+
+Registration and login require a verified email. Configure **Brevo** or **SendGrid** SMTP in production:
+
+```powershell
+php artisan examguard:test-mail you@example.com
+```
+
+Full provider setup: **[docs/SMTP.md](docs/SMTP.md)**.
 
 ### Files
 
@@ -586,15 +1015,43 @@ StudentNotificationService::notifyExamAssigned()
 
 ### Storage
 
+**Local development** (symlink):
+
 ```powershell
 php artisan storage:link
 ```
 
 Links `public/storage` → `storage/app/public` for avatars and violation snapshots.
 
+**Production without symlinks** (InfinityFree, etc.):
+
+| File | Role |
+|------|------|
+| `app/Support/PublicStorageUrl.php` | `PublicStorageUrl::for($path)` → `asset('storage/'.$path)` |
+| `public/.htaccess` | `RewriteRule ^storage/(.*)$ storage/serve.php?path=$1` when file not on disk |
+| `public/storage/serve.php` | Streams files from `storage/app/public/` with correct MIME type |
+
+`User::toAuthArray()` exposes `avatarUrl`. `ViolationEvent::toArray()` exposes `snapshotUrl`.
+
+Do **not** use Apache `RewriteRule` to `../../storage/app/public/` on InfinityFree — it returns HTTP 500.
+
+### Settings UI (`settings-shared.js`)
+
+Shared helpers used by professor and student settings:
+
+| Helper | Purpose |
+|--------|---------|
+| `bindPasswordToggles()` | Show/hide password fields (eye icon) |
+| `bindAvatarUpload()` | Click avatar → file picker → `POST /api/auth/avatar` |
+| `renderAvatarButton()` | Settings dialog avatar preview |
+| `renderNavAvatarButton()` | Top-nav circular avatar |
+| `bindDangerZone()` | Log out all devices, delete account |
+
+Professor settings bind to `#settingsView` (profile was merged into Settings tab).
+
 ---
 
-## 14. Testing
+## 15. Testing
 
 ```powershell
 php artisan test
@@ -606,7 +1063,7 @@ Feature tests live in `tests/Feature/`. Example: `ProctoringWarningCountTest.php
 
 ---
 
-## 15. Legacy folder
+## 16. Legacy folder
 
 `legacy/` contains the original **Node.js + SQLite + static HTML** prototype:
 
@@ -616,7 +1073,7 @@ Not used at runtime. Kept for reference when comparing old vs Laravel implementa
 
 ---
 
-## 16. Deployment notes
+## 17. Deployment notes
 
 ### Minimum production checklist
 
@@ -626,7 +1083,7 @@ Not used at runtime. Kept for reference when comparing old vs Laravel implementa
 4. Run `npm run build` and `php artisan config:cache`.
 5. Point web server document root to `public/`.
 6. Enable HTTPS for camera/mic permissions.
-7. Run `php artisan storage:link`.
+7. Run `php artisan storage:link` (or deploy `public/storage/serve.php` on hosts without symlinks).
 8. Review `PROCTORING_DEMO_MODE` and security expectations.
 
 ### Roles
@@ -645,11 +1102,43 @@ Dashboard scripts use query strings (`?v=9`) on script tags in Blade `@push('scr
 
 ---
 
+## 18. InfinityFree (free hosting)
+
+ExamGuard can be deployed to **InfinityFree** (free PHP 8.3 + MySQL) by building locally and uploading via FTP. InfinityFree has no SSH, no `artisan`, no symlinks, and no foreign keys on MySQL — the repo includes scripts and config to work around that.
+
+**Full guide:** [INFINITYFREE.md](INFINITYFREE.md)
+
+Quick start:
+
+```powershell
+.\scripts\build-infinityfree.ps1
+php artisan key:generate --show
+# Configure dist/infinityfree/.env from .env.infinityfree.example
+php artisan migrate:fresh --seed
+# Export DB, then:
+.\scripts\strip-fk-from-sql.ps1 -InputFile database\examguard-export.sql -OutputFile database\examguard-infinityfree.sql
+# Import SQL in InfinityFree phpMyAdmin, FTP upload dist/infinityfree/* to htdocs/
+```
+
+| Repo file | Purpose |
+|-----------|---------|
+| `INFINITYFREE.md` | Step-by-step deployment guide |
+| `scripts/build-infinityfree.ps1` | Build upload package → `dist/infinityfree/` |
+| `scripts/strip-fk-from-sql.ps1` | Strip FK constraints for InfinityFree MySQL |
+| `deploy/infinityfree/htdocs.htaccess` | Document root → `public/` |
+| `deploy/infinityfree/public-storage.htaccess` | Copied to `public/storage/.htaccess` |
+| `public/storage/serve.php` | Serve uploads without symlinks |
+| `deploy/infinityfree/fix-auto-increment.sql` | Fix `AUTO_INCREMENT` after phpMyAdmin import |
+| `.env.infinityfree.example` | Production env template (`QUEUE_CONNECTION=sync`, etc.) |
+
+---
+
 ## Quick reference — file to feature map
 
 | Feature | Primary files |
 |---------|----------------|
 | Routes | `routes/web.php` |
+| API / AJAX | `public/js/api-client.js`, `app/Http/Controllers/Api/*.php` — [§9](#9-ajax-and-json) |
 | Exam CRUD | `app/Http/Controllers/Api/ExamController.php` |
 | Attempts / violations | `app/Http/Controllers/Api/AttemptController.php` |
 | Live proctoring API | `app/Http/Controllers/Api/ProctoringController.php` |
@@ -657,7 +1146,8 @@ Dashboard scripts use query strings (`?v=9`) on script tags in Blade `@push('scr
 | Student UI | `resources/views/pages/student.blade.php`, `public/js/student.js` |
 | Take exam | `resources/views/pages/take-exam.blade.php`, `public/js/take-exam.js` |
 | Face / tab monitoring | `public/js/monitoring.js` |
-| Settings UI | `partials/*-settings.blade.php`, `settings-shared.js` |
+| Settings UI | `partials/*-settings.blade.php`, `settings-shared.js`, `professor-settings.js`, `student-settings.js` |
+| Public file URLs | `app/Support/PublicStorageUrl.php`, `public/storage/serve.php` |
 | Models | `app/Models/*.php` |
 
 ---

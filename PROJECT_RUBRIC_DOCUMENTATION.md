@@ -57,9 +57,10 @@ Traditional online quizzes lack proctoring, role separation, and structured exam
 
 - User registration/login with email verification  
 - Professor dashboard: exams, classes, results, proctoring, settings  
-- Student dashboard: home, calendar, exam room, results, settings  
-- Take-exam flow with preflight checks, timer, submit  
-- Browser-based proctoring (demo mode — assistive, not forensic security)  
+- Student dashboard: home, calendar, exam room, results, settings, in-app notifications  
+- Take-exam flow with preflight checks, timer, submit, max-warning lock  
+- Browser-based proctoring with violation snapshots (demo mode — assistive, not forensic security)  
+- Profile photos (avatar upload) and settings (password show/hide, preferences)  
 - MySQL persistence, session authentication  
 
 #### Limitations
@@ -67,7 +68,7 @@ Traditional online quizzes lack proctoring, role separation, and structured exam
 - Proctoring is **client-side** and can be bypassed by a determined user  
 - No native iOS/Android store app (responsive **mobile web** + camera APIs)  
 - Email on free hosting requires external SMTP (Brevo/SendGrid)  
-- InfinityFree: no SSH, no queue workers, no foreign keys on shared MySQL  
+- InfinityFree: no SSH, no queue workers, no foreign keys on shared MySQL; file uploads via `public/storage/serve.php` (not symlinks)  
 - No offline exam taking  
 
 ---
@@ -277,7 +278,9 @@ All pages include `<meta name="viewport" content="width=device-width, initial-sc
 | Typography | Plus Jakarta Sans, Space Grotesk (Google Fonts) |
 | Hierarchy | Page titles, card headers, table labels |
 | Navigation | Sidebar views with `data-view` switching; active state on nav links |
-| Feedback | `ExamGuardDialog` toasts and confirm modals |
+| Feedback | `ExamGuardDialog` toasts and confirm modals (e.g. class join, profile saved) |
+| Settings | Shared `settings-shared.js`: avatar upload, password visibility toggle, danger zone |
+| Notifications | Student bell: `exam_assigned`, `class_joined`, `exam_deleted`, `class_deleted` |
 | Accessibility | `prefers-reduced-motion` media queries; ARIA on notification toggles |
 
 ---
@@ -298,6 +301,12 @@ All pages include `<meta name="viewport" content="width=device-width, initial-sc
 - [ ] Login as professor and student in Chrome  
 - [ ] Repeat login in Firefox or Edge  
 - [ ] Open student take-exam on mobile Safari or Chrome Android (HTTPS)  
+- [ ] Student joins class → toast + bell notification (not browser `alert`)  
+- [ ] Professor views violation log → snapshot image loads  
+- [ ] Upload profile photo (professor + student settings)  
+- [ ] Max warnings during exam → student cannot re-enter (Violations exceeded)  
+
+**Production demo URL:** `https://examguard.site.je` — see [INFINITYFREE.md](INFINITYFREE.md) for deploy and smoke-test checklist.
 
 ---
 
@@ -645,8 +654,26 @@ Assign each member:
 | Auth | Laravel session + CSRF |
 | Proctoring | MediaPipe Face Landmarker (CDN) |
 | Hosting | XAMPP (dev), InfinityFree (deploy) |
+| File uploads | `storage/app/public/` + `PublicStorageUrl` / `serve.php` on InfinityFree |
 
-## Appendix B — Key source files
+---
+
+## Appendix B — Recent production refinements
+
+| Feature | Implementation |
+|---------|----------------|
+| **Class join notification** | `StudentNotificationService::notifyClassJoined()` + toast in `student.js` |
+| **Violation lock** | `ExamAttempt::isViolationLocked()` blocks re-entry after max warnings |
+| **Violation snapshots** | Saved to `storage/app/public/violation-snapshots/`; professor UI shows `snapshotUrl` |
+| **Avatar upload** | `POST /api/auth/avatar`; nav + settings preview via `settings-shared.js` |
+| **InfinityFree storage** | `public/storage/serve.php` — avoids HTTP 500 from external `.htaccess` rewrites |
+| **AUTO_INCREMENT fix** | `deploy/infinityfree/fix-auto-increment.sql` after phpMyAdmin import |
+
+Full technical detail: [DOCUMENTATION.md](DOCUMENTATION.md) · Deploy guide: [INFINITYFREE.md](INFINITYFREE.md)
+
+---
+
+## Appendix C — Key source files
 
 | Rubric area | Files |
 |-------------|--------|
@@ -656,6 +683,9 @@ Assign each member:
 | Responsive CSS | `professor.blade.php`, `student.blade.php`, `app.blade.php` |
 | Mobile camera | `monitoring.js`, `take-exam.js` |
 | Database | `database/migrations/`, `app/Models/` |
+| Notifications | `StudentNotificationService.php`, `student-notifications.js` |
+| Settings / avatars | `settings-shared.js`, `professor-settings.js`, `student-settings.js` |
+| File storage | `PublicStorageUrl.php`, `public/storage/serve.php` |
 
 ---
 

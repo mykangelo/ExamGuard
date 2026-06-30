@@ -32,9 +32,7 @@ class ProctoringController extends Controller
             ->filter(fn (ExamAttempt $attempt) => $attempt->displayStatus() !== ExamAttempt::STATUS_SUBMITTED)
             ->map(function (ExamAttempt $attempt) {
                 $startedAt = $attempt->started_at;
-                $elapsedSeconds = $startedAt ? (int) $startedAt->diffInSeconds(now()) : 0;
-                $timeLimitSeconds = max(0, ($attempt->exam->time_limit ?? 0) * 60);
-                $remainingSeconds = max(0, $timeLimitSeconds - $elapsedSeconds);
+                $timing = $attempt->sessionTiming();
                 $latestEvent = $attempt->violationEvents->first();
                 $summary = $attempt->severitySummary();
 
@@ -46,8 +44,8 @@ class ProctoringController extends Controller
                     'examTitle' => $attempt->exam?->title ?? 'Exam',
                     'className' => $attempt->exam?->assignedClassroom()?->name,
                     'status' => $attempt->displayStatus(),
-                    'elapsedSeconds' => $elapsedSeconds,
-                    'remainingSeconds' => $remainingSeconds,
+                    'elapsedSeconds' => $timing['elapsedSeconds'],
+                    'remainingSeconds' => $timing['remainingSeconds'],
                     'warningCount' => $attempt->warning_count,
                     'warningLimit' => $attempt->exam?->warning_limit ?? 3,
                     'severitySummary' => $summary,

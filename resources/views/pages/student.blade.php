@@ -507,6 +507,11 @@ html, body {
 }
 .sd-badge-live { background: rgba(34,197,94,0.15); color: #22c55e; display: inline-flex; align-items: center; gap: 5px; }
 .sd-badge-live .sd-pulse-dot { width: 5px; height: 5px; }
+.sd-badge-locked { background: rgba(239,68,68,0.15); color: #f87171; }
+.sd-upcoming-locked { color: #f87171 !important; }
+.sd-upcoming-row.is-locked { opacity: 0.72; cursor: not-allowed; }
+.sd-locked-note { font-size: 12px; color: rgba(255,255,255,0.45); }
+.pg-notify-item-icon.is-joined { background: rgba(16,185,129,0.14); color: #34d399; }
 .sd-badge-due { background: rgba(239,68,68,0.12); color: #ef4444; }
 .sd-badge-scheduled { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.45); }
 .sd-enter-now-pill {
@@ -1346,8 +1351,8 @@ html, body {
 <script src="/js/api-client.js?v=11"></script>
 <script src="/js/auth-guard.js"></script>
 <script src="/js/professor-dialog.js?v=1"></script>
-<script src="/js/settings-shared.js?v=2"></script>
-<script src="/js/student-settings.js?v=2"></script>
-<script src="/js/student.js?v=25"></script>
-<script src="/js/student-notifications.js?v=1"></script>
+<script src="/js/settings-shared.js?v=3"></script>
+<script src="/js/student-settings.js?v=3"></script>
+<script src="/js/student.js?v=27"></script>
+<script src="/js/student-notifications.js?v=2"></script>
 @endpush

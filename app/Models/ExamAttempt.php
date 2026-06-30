@@ -136,4 +136,55 @@ class ExamAttempt extends Model
             $this->forceFill(['warning_count' => $count])->save();
         }
     }
+
+    public function isViolationLocked(?Exam $exam = null): bool
+    {
+        if ($this->status === self::STATUS_SUBMITTED) {
+            return false;
+        }
+
+        $exam = $exam ?? $this->exam;
+        $limit = max(1, (int) ($exam?->warning_limit ?? 3));
+
+        return (int) $this->warning_count >= $limit;
+    }
+
+    /**
+     * Elapsed/remaining for live proctoring UI.
+     * Freezes at last heartbeat when disconnected and caps at the exam time limit.
+     */
+    public function sessionTiming(): array
+    {
+        $timeLimitSeconds = max(0, (int) (($this->exam->time_limit ?? 0) * 60));
+        $startedAt = $this->started_at;
+
+        if (! $startedAt) {
+            return ['elapsedSeconds' => 0, 'remainingSeconds' => $timeLimitSeconds];
+        }
+
+        $endAt = now();
+
+        if ($this->displayStatus() === self::STATUS_DISCONNECTED) {
+            $endAt = $this->last_heartbeat_at ?? $startedAt;
+        } elseif ($this->status === self::STATUS_SUBMITTED && $this->submitted_at) {
+            $endAt = $this->submitted_at;
+        }
+
+        if ($timeLimitSeconds > 0) {
+            $hardEnd = $startedAt->copy()->addSeconds($timeLimitSeconds);
+            if ($endAt->gt($hardEnd)) {
+                $endAt = $hardEnd;
+            }
+        }
+
+        $elapsedSeconds = (int) $startedAt->diffInSeconds($endAt);
+        if ($timeLimitSeconds > 0) {
+            $elapsedSeconds = min($elapsedSeconds, $timeLimitSeconds);
+        }
+
+        return [
+            'elapsedSeconds' => $elapsedSeconds,
+            'remainingSeconds' => max(0, $timeLimitSeconds - $elapsedSeconds),
+        ];
+    }
 }

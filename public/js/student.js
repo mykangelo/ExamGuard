@@ -231,8 +231,31 @@
     return Boolean(exam?.opensAt && new Date(exam.opensAt).getTime() > Date.now());
   }
 
+  function isViolationLocked(exam) {
+    const attempt = exam?.attempt;
+    if (!attempt || attempt.submittedAt) return false;
+    if (attempt.violationLocked) return true;
+    const limit = exam.warningLimit ?? 3;
+    return (attempt.warningCount ?? 0) >= limit;
+  }
+
+  function showToast(message, type = 'success') {
+    if (window.ExamGuardDialog?.toast) {
+      window.ExamGuardDialog.toast(message, type);
+      return;
+    }
+    const root = document.getElementById('pgToastRoot');
+    if (!root) return;
+    const el = document.createElement('div');
+    el.className = `pg-toast is-${type}`;
+    el.textContent = message;
+    root.appendChild(el);
+    window.setTimeout(() => el.remove(), 3200);
+  }
+
   function isLive(exam) {
     if (exam.attempt?.submittedAt) return false;
+    if (isViolationLocked(exam)) return false;
     if (isFutureOpen(exam)) return false;
     if (exam.attempt && !exam.attempt.submittedAt) return true;
     return exam.status === 'active';
@@ -240,6 +263,7 @@
 
   function isUpcoming(exam) {
     if (exam.attempt?.submittedAt) return false;
+    if (isViolationLocked(exam)) return true;
     if (isLive(exam)) return true;
     if (exam.status === 'scheduled') return true;
     if (isFutureOpen(exam)) return true;
@@ -334,6 +358,7 @@
   }
 
   function upcomingWhenLabel(exam) {
+    if (isViolationLocked(exam)) return 'Violations exceeded';
     if (isLive(exam)) return 'Live now';
     if (exam.opensAt) return formatWhen(exam.opensAt);
     return 'Available now';
@@ -369,6 +394,10 @@
   function openUpcomingExam(examId) {
     const exam = examById(examId);
     if (!exam) return;
+    if (isViolationLocked(exam)) {
+      showToast('Maximum proctoring violations exceeded. You cannot re-enter this exam.', 'error');
+      return;
+    }
     if (isLive(exam)) {
       goToExam(exam.id);
       return;
@@ -631,8 +660,14 @@
     mergeExamIntoState(normalized);
     markExamKeyUsed();
 
-    const inProgress = exam.attempt?.status === 'in_progress';
+    const inProgress = exam.attempt?.status === 'in_progress' && !isViolationLocked(exam);
     const isActive = exam.available || exam.status === 'active';
+
+    if (isViolationLocked(exam)) {
+      showToast('Maximum proctoring violations exceeded. You cannot re-enter this exam.', 'error');
+      refreshExamsAfterKey();
+      return;
+    }
 
     if (inProgress || isActive) {
       clearPendingExamKey();
@@ -670,6 +705,12 @@
       const { exam } = await ExamGuardApi.accessExamByKey(examKey);
       handleExamKeyResult(exam);
     } catch (error) {
+      if (error.code === 'violation_exceeded') {
+        showExamKeyError(error.message || 'Maximum proctoring violations exceeded.');
+        if (error.exam) mergeExamIntoState(error.exam);
+        refreshExamsAfterKey();
+        return;
+      }
       if (error.code === 'already_submitted' && error.exam) {
         showExamKeySubmitted(error.exam);
         return;
@@ -691,6 +732,13 @@
           exam,
           time: submitted,
           sort: new Date(submitted).getTime(),
+        });
+      } else if (isViolationLocked(exam)) {
+        events.push({
+          type: 'locked',
+          exam,
+          time: exam.attempt?.startedAt || new Date().toISOString(),
+          sort: Date.now(),
         });
       } else if (live) {
         events.push({
@@ -724,6 +772,7 @@
     const icons = {
       announced: ['ti-file-description', 'rgba(59,130,246,0.12)', '#3b82f6', 'rgba(59,130,246,0.20)'],
       live: ['ti-writing', 'rgba(34,197,94,0.12)', '#22c55e', 'rgba(34,197,94,0.20)'],
+      locked: ['ti-alert-triangle', 'rgba(239,68,68,0.12)', '#ef4444', 'rgba(239,68,68,0.20)'],
       result: ['ti-chart-bar', 'rgba(245,158,11,0.12)', '#f59e0b', 'rgba(245,158,11,0.20)'],
       scheduled: ['ti-calendar', 'rgba(255,255,255,0.06)', 'rgba(255,255,255,0.40)', 'rgba(255,255,255,0.12)'],
     };
@@ -734,6 +783,11 @@
     if (event.type === 'live') {
       badge = '<span class="sd-badge sd-badge-live"><span class="sd-pulse-dot"></span>Live now</span>';
       actions = `<button type="button" class="sd-enter-now-pill" data-take-exam="${exam.id}">Enter now</button>`;
+    } else if (event.type === 'locked') {
+      const warnings = exam.attempt?.warningCount ?? 0;
+      const limit = exam.warningLimit ?? 3;
+      badge = '<span class="sd-badge sd-badge-locked">Violations exceeded</span>';
+      actions = `<span class="sd-locked-note">${warnings}/${limit} warnings · session ended</span>`;
     } else if (event.type === 'scheduled' && exam.opensAt) {
       badge = `<span class="sd-badge sd-badge-due">Due ${formatDueShort(exam.opensAt)}</span>`;
       actions = '<button type="button" class="sd-link">View details</button>';
@@ -865,14 +919,20 @@
   }
 
   function upcomingRowHtml(exam) {
-    const live = isLive(exam);
+    const locked = isViolationLocked(exam);
+    const live = !locked && isLive(exam);
     const when = upcomingWhenLabel(exam);
     const cls = classForExam(exam);
     const classIdx = cls ? state.classes.findIndex((c) => Number(c.id) === Number(cls.id)) : 0;
     const dotColor = classColor(classIdx >= 0 ? classIdx : 0);
-    const whenClass = live ? 'sd-upcoming-when sd-upcoming-live' : 'sd-upcoming-when';
+    const whenClass = locked
+      ? 'sd-upcoming-when sd-upcoming-locked'
+      : live
+        ? 'sd-upcoming-when sd-upcoming-live'
+        : 'sd-upcoming-when';
+    const disabled = locked ? ' disabled aria-disabled="true"' : '';
     return `
-      <button type="button" class="sd-upcoming-row sd-upcoming-row-btn" data-upcoming-exam="${exam.id}" data-upcoming-live="${live ? '1' : '0'}">
+      <button type="button" class="sd-upcoming-row sd-upcoming-row-btn${locked ? ' is-locked' : ''}" data-upcoming-exam="${exam.id}" data-upcoming-live="${live ? '1' : '0'}"${disabled}>
         <div class="sd-upcoming-top">
           <span class="sd-upcoming-name"><span class="sd-class-dot" style="background:${dotColor}"></span> ${esc(exam.title)}</span>
           <span class="${whenClass}">${live ? '<span class="sd-pulse-dot"></span> ' : ''}${esc(when)}</span>
@@ -1366,7 +1426,7 @@
   }
 
   function renderLiveBanner() {
-    const liveExam = state.exams.find((e) => isLive(e) && !e.attempt?.submittedAt);
+    const liveExam = state.exams.find((e) => isLive(e) && !e.attempt?.submittedAt && !isViolationLocked(e));
     if (!liveExam || state.liveBannerDismissed) {
       els.liveBanner?.classList.remove('visible');
       state.liveExamId = null;
@@ -1380,7 +1440,7 @@
   function renderGreeting() {
     const name = state.user?.name?.split(' ')[0] || 'Student';
     if (els.greeting) els.greeting.textContent = `${greeting()}, ${name}.`;
-    const upcoming = upcomingExams().length;
+    const upcoming = upcomingExams().filter((e) => !isViolationLocked(e)).length;
     if (els.greetingSub) {
       els.greetingSub.textContent = upcoming
         ? `You have ${upcoming} upcoming exam${upcoming === 1 ? '' : 's'} this week.`
@@ -1612,6 +1672,11 @@
   }
 
   function goToExam(examId) {
+    const exam = examById(examId);
+    if (exam && isViolationLocked(exam)) {
+      showToast('Maximum proctoring violations exceeded. You cannot re-enter this exam.', 'error');
+      return;
+    }
     const target = `/take-exam?examId=${examId}`;
     window.ExamGuardRoute?.save(target);
     location.href = target;
@@ -1647,6 +1712,10 @@
     }
   }
 
+  function renderNavAvatar(btn, user) {
+    window.ExamGuardSettingsUI?.renderNavAvatarButton?.(btn, user);
+  }
+
   async function loadDashboard() {
     try {
       const [{ user }, { classes }, { exams }] = await Promise.all([
@@ -1659,7 +1728,7 @@
       state.exams = exams || [];
       restorePendingExamKey();
 
-      if (els.avatarBtn) els.avatarBtn.textContent = initials(user.name);
+      renderNavAvatar(els.avatarBtn, user);
       if (els.joinName) els.joinName.value = user.name;
 
       renderClassList();
@@ -1785,9 +1854,10 @@
         const { classroom } = await ExamGuardApi.joinClass(code);
         closeJoinModal();
         await loadDashboard();
-        alert(`You joined ${classroom.name}.`);
+        showToast(`You joined ${classroom.name}.`, 'success');
+        window.ExamGuardStudentNotifications?.refresh?.();
       } catch (error) {
-        alert(error.message);
+        showToast(error.message || 'Unable to join class.', 'error');
       }
     });
 
@@ -1876,7 +1946,7 @@
 
   function applyUserFromSettings(user) {
     state.user = user;
-    if (els.avatarBtn) els.avatarBtn.textContent = initials(user.name);
+    renderNavAvatar(els.avatarBtn, user);
     if (els.joinName) els.joinName.value = user.name;
     if (state.currentView === 'home') renderGreeting();
   }

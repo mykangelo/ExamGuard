@@ -207,6 +207,8 @@ class Exam extends Model
                 'id' => $attempt->id,
                 'status' => $attempt->displayStatus(),
                 'warningCount' => $attempt->warning_count,
+                'warningLimit' => $this->warning_limit,
+                'violationLocked' => $attempt->isViolationLocked($this),
                 'startedAt' => $attempt->started_at?->toIso8601String(),
             ] : null,
         ];

@@ -11,6 +11,18 @@ use Illuminate\Support\Collection;
 
 class StudentNotificationService
 {
+    public static function notifyClassJoined(Classroom $classroom, int $studentId): void
+    {
+        StudentNotification::create([
+            'student_id' => $studentId,
+            'type' => StudentNotification::TYPE_CLASS_JOINED,
+            'title' => 'Joined class',
+            'message' => "You are now enrolled in {$classroom->name}.",
+            'classroom_id' => $classroom->id,
+            'classroom_name' => $classroom->name,
+        ]);
+    }
+
     public static function notifyExamAssigned(Exam $exam, Classroom $classroom): void
     {
         if ($exam->status === Exam::STATUS_DRAFT) {

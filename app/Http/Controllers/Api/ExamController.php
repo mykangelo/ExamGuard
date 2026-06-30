@@ -117,6 +117,8 @@ class ExamController extends Controller
                         'score' => $attempt->score,
                         'total' => $attempt->total,
                         'warningCount' => $attempt->warning_count,
+                        'warningLimit' => $exam->warning_limit,
+                        'violationLocked' => $attempt->isViolationLocked($exam),
                         'submittedAt' => $attempt->submitted_at?->toIso8601String(),
                         'startedAt' => $attempt->started_at?->toIso8601String(),
                     ] : null,
@@ -242,12 +244,28 @@ class ExamController extends Controller
             return response()->json(['error' => 'Exam already submitted.'], 409);
         }
 
+        if ($existingAttempt?->isViolationLocked($exam)) {
+            return response()->json([
+                'error' => 'Maximum proctoring violations exceeded. You cannot continue this exam.',
+                'code' => 'violation_exceeded',
+            ], 403);
+        }
+
         $exam->load(['questions.choices', 'assignments.classroom', 'professor']);
+
+        $resumeAttempt = $existingAttempt
+            && ! $existingAttempt->isViolationLocked($exam)
+            && in_array($existingAttempt->displayStatus(), [
+                ExamAttempt::STATUS_IN_PROGRESS,
+                ExamAttempt::STATUS_DISCONNECTED,
+            ], true)
+                ? $existingAttempt
+                : null;
 
         return response()->json([
             'exam' => $exam->toStudentArray(
                 includeAnswers: false,
-                attempt: ($existingAttempt?->isInProgress()) ? $existingAttempt : null,
+                attempt: $resumeAttempt,
             ),
         ]);
     }
@@ -482,6 +500,14 @@ class ExamController extends Controller
             ], 409);
         }
 
+        if ($existingAttempt?->isViolationLocked($exam)) {
+            return response()->json([
+                'error' => 'Maximum proctoring violations exceeded. You cannot continue this exam.',
+                'code' => 'violation_exceeded',
+                'exam' => $this->examKeyPayload($exam, $status, false, $existingAttempt),
+            ], 403);
+        }
+
         $request->session()->put("exam_key_access.{$exam->id}", true);
 
         return response()->json([
@@ -520,10 +546,19 @@ class ExamController extends Controller
             'classIds' => $assignmentClassIds,
             'classId' => $assignmentClassIds[0] ?? null,
             'keyAccess' => true,
-            'attempt' => ($attempt && $attempt->isInProgress()) ? [
+            'attempt' => ($attempt && ! $attempt->isViolationLocked($exam)) ? [
                 'status' => $attempt->displayStatus(),
+                'warningCount' => $attempt->warning_count,
+                'warningLimit' => $exam->warning_limit,
+                'violationLocked' => false,
                 'startedAt' => $attempt->started_at?->toIso8601String(),
-            ] : null,
+            ] : ($attempt && $attempt->isViolationLocked($exam) ? [
+                'status' => $attempt->displayStatus(),
+                'warningCount' => $attempt->warning_count,
+                'warningLimit' => $exam->warning_limit,
+                'violationLocked' => true,
+                'startedAt' => $attempt->started_at?->toIso8601String(),
+            ] : null),
         ];
     }
 

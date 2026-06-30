@@ -283,6 +283,11 @@ function returnToStudentDashboard() {
 }
 
 function lockExamUI() {
+  examFinished = true;
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
   // disable all inputs so student cannot continue
   document.querySelectorAll('input, button').forEach((el) => {
     if (el.id === 'submitConfirmCancel' || el.id === 'submitConfirmOk') return;
@@ -369,6 +374,10 @@ async function startSession() {
       } catch (_) {}
     }, 20000);
   } catch (error) {
+    if (error.code === 'violation_exceeded') {
+      blockExam(error.message || 'Maximum proctoring violations exceeded. You cannot continue this exam.');
+      throw error;
+    }
     blockExam(error.message);
     throw error;
   }
@@ -451,6 +460,9 @@ async function renderExam() {
   try {
     ({ exam: activeExam } = await ExamGuardApi.exam(activeExamId));
   } catch (error) {
+    if (error.code === 'violation_exceeded') {
+      return blockExam(error.message || 'Maximum proctoring violations exceeded. You cannot continue this exam.');
+    }
     return blockExam(error.message);
   }
 
@@ -511,6 +523,9 @@ async function renderExam() {
 
   // Resume an in-progress attempt (e.g. page refresh) without re-running preflight.
   const resumeAttempt = activeExam.attempt;
+  if (resumeAttempt?.violationLocked) {
+    return blockExam('Maximum proctoring violations exceeded. You cannot continue this exam.');
+  }
   if (resumeAttempt?.status === 'in_progress' || resumeAttempt?.status === 'disconnected') {
     if (resumeAttempt.startedAt) {
       const elapsed = Math.floor((Date.now() - new Date(resumeAttempt.startedAt).getTime()) / 1000);

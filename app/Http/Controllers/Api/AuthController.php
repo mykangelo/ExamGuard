@@ -86,18 +86,38 @@ class AuthController extends Controller
             'role'                  => ['required', 'in:professor,student'],
         ]);
 
-        $user = User::create([
-            'name'     => $input['name'],
-            'email'    => $input['email'],
-            'password' => $input['password'],
-            'role'     => $input['role'],
-        ]);
+        try {
+            $user = User::create([
+                'name'     => $input['name'],
+                'email'    => $input['email'],
+                'password' => $input['password'],
+                'role'     => $input['role'],
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
 
-        $user->sendEmailVerificationNotification();
+            return response()->json([
+                'error' => 'Unable to create account. If you already registered, try signing in or use a different email.',
+            ], 500);
+        }
+
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'needs_verification' => true,
+                'email'              => $user->email,
+                'email_sent'         => false,
+                'error'              => 'Account created, but the verification email could not be sent. Use Resend or try again shortly.',
+            ], 201);
+        }
 
         return response()->json([
             'needs_verification' => true,
             'email'              => $user->email,
+            'email_sent'         => true,
         ], 201);
     }
 

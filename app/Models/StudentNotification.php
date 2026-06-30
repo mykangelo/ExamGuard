@@ -13,6 +13,8 @@ class StudentNotification extends Model
 
     public const TYPE_CLASS_DELETED = 'class_deleted';
 
+    public const TYPE_CLASS_JOINED = 'class_joined';
+
     protected $fillable = [
         'student_id',
         'type',
@@ -54,7 +56,7 @@ class StudentNotification extends Model
     private function actionPayload(): array
     {
         return match ($this->type) {
-            self::TYPE_EXAM_ASSIGNED => [
+            self::TYPE_EXAM_ASSIGNED, self::TYPE_CLASS_JOINED => [
                 'view' => 'class',
                 'classId' => $this->classroom_id,
             ],

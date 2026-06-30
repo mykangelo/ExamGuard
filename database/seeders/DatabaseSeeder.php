@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'ExamGuard Professor',
                 'password' => Hash::make(env('SEED_PROFESSOR_PASSWORD', 'Professor123!')),
                 'role' => 'professor',
+                'email_verified_at' => now(),
             ]
         );
 
@@ -25,6 +26,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'ExamGuard Student',
                 'password' => Hash::make(env('SEED_STUDENT_PASSWORD', 'Student123!')),
                 'role' => 'student',
+                'email_verified_at' => now(),
             ]
         );
     }

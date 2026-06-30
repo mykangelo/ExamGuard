@@ -88,10 +88,23 @@ php artisan examguard:create-user "Full Name" email@example.com "StrongPassword"
 | `resources/views/` | Blade HTML templates |
 | `resources/css/app.css` | Tailwind theme and components |
 | `public/js/` | Frontend JavaScript |
+| `public/storage/serve.php` | Serves uploads when symlinks are unavailable (InfinityFree) |
+| `app/Support/PublicStorageUrl.php` | Avatar and snapshot URL helper |
 | `routes/web.php` | Pages and `/api/*` routes |
 
 ## Notes
 
 - Authentication uses Laravel sessions with CSRF protection.
 - Webcam/tab monitoring runs client-side via MediaPipe (`public/js/monitoring.js`).
-- Warning counts are reported by the browser (demo behavior; not tamper-proof).
+- Warning counts are derived server-side from `violation_events` (authoritative at submit and for max-warning lock).
+- Profile photos and violation snapshots are stored under `storage/app/public/` and served at `/storage/...` (via `storage:link` locally, or `public/storage/serve.php` on InfinityFree).
+- After max proctoring warnings, students cannot re-enter the exam (`violation_exceeded`).
+
+## Deployment
+
+| Target | Guide |
+|--------|--------|
+| **InfinityFree** (free) | [INFINITYFREE.md](INFINITYFREE.md) — build locally, FTP upload |
+| **BSCpE rubric / defense** | [PROJECT_RUBRIC_DOCUMENTATION.md](PROJECT_RUBRIC_DOCUMENTATION.md) |
+| **Email (SMTP)** | [docs/SMTP.md](docs/SMTP.md) — Brevo or SendGrid for verification |
+| **VPS / Railway / Render** | [DOCUMENTATION.md §17](DOCUMENTATION.md#17-deployment-notes) |

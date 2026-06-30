@@ -198,14 +198,7 @@
     if (studentId) studentId.value = user.studentId || '';
 
     ui?.renderAvatarButton?.(document.getElementById('sdSettingsAvatarBtn'), user);
-    const navAvatar = document.getElementById('sdAvatarBtn');
-    if (navAvatar) {
-      if (user.avatarUrl) {
-        navAvatar.innerHTML = `<img src="${user.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-      } else {
-        navAvatar.textContent = initials(user.name);
-      }
-    }
+    ui?.renderNavAvatarButton?.(document.getElementById('sdAvatarBtn'), user);
 
     const emailWrap = document.querySelector('#sdSettingsProfileForm .pg-settings-email-wrap');
     if (emailWrap) {

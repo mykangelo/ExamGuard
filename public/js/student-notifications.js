@@ -13,6 +13,7 @@
 
   function iconForType(type) {
     if (type === 'exam_assigned') return 'ti-file-description';
+    if (type === 'class_joined') return 'ti-school';
     if (type === 'exam_deleted') return 'ti-file-off';
     if (type === 'class_deleted') return 'ti-school-off';
     return 'ti-bell';
@@ -20,6 +21,7 @@
 
   function iconClassForType(type) {
     if (type === 'exam_assigned') return 'is-assigned';
+    if (type === 'class_joined') return 'is-joined';
     if (type === 'exam_deleted' || type === 'class_deleted') return 'is-removed';
     return 'is-default';
   }

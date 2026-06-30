@@ -76,10 +76,14 @@ class ClassroomController extends Controller
             return response()->json(['error' => 'Class code not found.'], 404);
         }
 
-        Enrollment::firstOrCreate([
+        $enrollment = Enrollment::firstOrCreate([
             'classroom_id' => $classroom->id,
             'student_id' => $request->user()->id,
         ], ['joined_at' => now()]);
+
+        if ($enrollment->wasRecentlyCreated) {
+            StudentNotificationService::notifyClassJoined($classroom, $request->user()->id);
+        }
 
         return response()->json([
             'classroom' => [

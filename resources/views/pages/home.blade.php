@@ -229,13 +229,13 @@
         <div class="tf-reveal space-y-6">
             <span class="inline-block rounded-full border border-[#3b82f6]/20 bg-[#3b82f6]/10 px-4 py-1.5 text-[12px] font-semibold uppercase tracking-wider text-[#3b82f6]">ExamGuard Monitor</span>
             <h2 class="text-[2.4rem] font-[700] leading-[1.1] tracking-[-0.02em] text-slate-900">
-                AI-powered proctoring, built right in.
+                Browser-based proctoring, built right in.
             </h2>
             <p class="text-[18px] leading-[1.7] text-slate-600">
-                Enable secure, automated proctoring with one click — no downloads, no installs. Runs entirely in the student's browser.
+                Enable exam monitoring with one click — no downloads, no installs. Runs entirely in the student's browser.
             </p>
             <ul class="space-y-4">
-                @foreach(['Tab switching detection','Mouse boundary restrictions','Webcam camera monitoring','AI face detection (MediaPipe)','Require student ID verification','Timestamped violation event log'] as $item)
+                @foreach(['Tab switching detection','Mouse boundary restrictions','Webcam camera monitoring','Face detection (MediaPipe)','Require student ID verification','Timestamped violation event log'] as $item)
                 <li class="flex items-center gap-3 text-[17px] text-slate-700">
                     <svg class="h-5 w-5 shrink-0 text-[#3b82f6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     {{ $item }}

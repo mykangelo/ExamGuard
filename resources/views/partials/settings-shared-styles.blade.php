@@ -267,7 +267,7 @@
 .pg-settings-pw-toggle {
     position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
     background: none; border: none; color: rgba(255,255,255,0.40); cursor: pointer;
-    padding: 4px; font-size: 16px; line-height: 1;
+    padding: 4px; font-size: 16px; line-height: 1; z-index: 2;
 }
 .pg-settings-pw-toggle:hover { color: rgba(255,255,255,0.75); }
 .pg-settings-pw-strength {

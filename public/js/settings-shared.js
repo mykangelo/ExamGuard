@@ -40,7 +40,9 @@
     root.querySelectorAll('[data-pw-toggle]').forEach((btn) => {
       if (btn.dataset.bound === '1') return;
       btn.dataset.bound = '1';
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const input = btn.closest('.pg-settings-pw-field')?.querySelector('input');
         if (!input) return;
         const show = input.type === 'password';
@@ -72,7 +74,8 @@
     if (!btn) return;
     const name = user?.name || btn.dataset.name || 'User';
     if (user?.avatarUrl) {
-      btn.innerHTML = `<img src="${user.avatarUrl}" alt="">`;
+      const bust = user.avatarUrl.includes('?') ? '&' : '?';
+      btn.innerHTML = `<img src="${user.avatarUrl}${bust}t=${Date.now()}" alt="">`;
     } else {
       btn.textContent = initials(name);
     }
@@ -166,12 +169,24 @@
     }
   }
 
+  function renderNavAvatarButton(btn, user) {
+    if (!btn) return;
+    const name = user?.name || 'User';
+    if (user?.avatarUrl) {
+      const bust = user.avatarUrl.includes('?') ? '&' : '?';
+      btn.innerHTML = `<img src="${user.avatarUrl}${bust}t=${Date.now()}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      return;
+    }
+    btn.textContent = initials(name);
+  }
+
   window.ExamGuardSettingsUI = {
     initials,
     toast,
     bindPasswordToggles,
     bindPasswordStrength,
     renderAvatarButton,
+    renderNavAvatarButton,
     bindAvatarUpload,
     bindDangerZone,
   };

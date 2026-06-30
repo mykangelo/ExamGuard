@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorageUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class ViolationEvent extends Model
 {
@@ -44,7 +44,7 @@ class ViolationEvent extends Model
             return null;
         }
 
-        return Storage::disk('public')->url($this->snapshot_path);
+        return PublicStorageUrl::for($this->snapshot_path);
     }
 
     public function toArray(): array

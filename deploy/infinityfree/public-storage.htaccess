@@ -1,0 +1,4 @@
+# InfinityFree disables symlink(). Copy serve.php + this file to public/storage/
+# (replaces php artisan storage:link). Do NOT rewrite to ../../storage — causes HTTP 500.
+
+Options -Indexes

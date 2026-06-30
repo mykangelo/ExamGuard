@@ -686,5 +686,5 @@ body.te-exam-body .eg-btn-primary:hover:not(:disabled) {
 <script src="/js/api-client.js"></script>
 <script src="/js/auth-guard.js"></script>
 <script src="/js/monitoring.js"></script>
-<script src="/js/take-exam.js?v=16"></script>
+<script src="/js/take-exam.js?v=17"></script>
 @endpush

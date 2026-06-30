@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorageUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -78,7 +79,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'role'         => $this->role,
             'verified'     => $this->hasVerifiedEmail(),
             'member_since' => $this->created_at?->format('M j, Y'),
-            'avatarUrl'    => $this->avatar_path ? asset('storage/'.$this->avatar_path) : null,
+            'avatarUrl'    => PublicStorageUrl::for($this->avatar_path),
             'department'   => $prefs['department'] ?? '',
             'yearLevel'    => $prefs['yearLevel'] ?? '',
             'studentId'    => $prefs['studentId'] ?? '',
