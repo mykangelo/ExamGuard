@@ -29,7 +29,7 @@
 
 ---
 
-## I. PROJECT DOCUMENTATION & PLANNING (15 pts)
+## I. PROJECT DOCUMENTATION & PLANNING
 
 ### 1.1 Project proposal & objectives
 
@@ -221,7 +221,7 @@ Open **http://localhost:8000**
 
 ---
 
-## II. RESPONSIVE WEBSITE DESIGN (20 pts)
+## II. RESPONSIVE WEBSITE DESIGN
 
 ### 2.1 Mobile responsiveness
 
@@ -310,7 +310,7 @@ All pages include `<meta name="viewport" content="width=device-width, initial-sc
 
 ---
 
-## III. PHP SESSION MANAGEMENT (15 pts)
+## III. PHP SESSION MANAGEMENT
 
 ExamGuard uses **Laravel session management** (built on PHP sessions). This satisfies the rubric’s session requirements at framework level.
 
@@ -357,7 +357,7 @@ ExamGuard uses **Laravel session management** (built on PHP sessions). This sati
 
 ---
 
-## IV. AJAX IMPLEMENTATION (20 pts)
+## IV. AJAX IMPLEMENTATION
 
 ### 4.1 AJAX request handling
 
@@ -430,7 +430,7 @@ All `/api/*` routes map to `app/Http/Controllers/Api/*.php`:
 
 ---
 
-## V. JSON DATA HANDLING (15 pts)
+## V. JSON DATA HANDLING
 
 ### 5.1 JSON encoding & decoding (PHP)
 
@@ -479,7 +479,7 @@ Malformed JSON: empty object fallback in `api-client.js`; validation errors retu
 
 ---
 
-## VI. DATABASE INTEGRATION (10 pts)
+## VI. DATABASE INTEGRATION
 
 ### 6.1 CRUD operations
 
@@ -507,7 +507,7 @@ All CRUD via **Eloquent ORM** (PDO prepared statements under the hood), triggere
 
 ---
 
-## VII. MOBILE APPLICATION (15 pts)
+## VII. MOBILE APPLICATION
 
 ExamGuard is implemented as a **responsive mobile web application** that runs in the device browser. Core features are accessible on phones and tablets without a separate native APK/IPA.
 
@@ -551,7 +551,7 @@ This matches the rubric’s “mobile app communicates with PHP backend via JSON
 
 ---
 
-## VIII. PRESENTATION & DEFENSE (10 pts)
+## VIII. PRESENTATION & DEFENSE
 
 ### 8.1 Suggested presentation flow (15–20 minutes)
 
