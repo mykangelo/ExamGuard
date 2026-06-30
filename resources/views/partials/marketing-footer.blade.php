@@ -8,6 +8,16 @@
                     examguard.
                 </a>
                 <p class="text-[14px] leading-relaxed text-slate-400">Controlled online exam monitoring for academic integrity.</p>
+
+                <div class="pt-3">
+                    <p class="text-[13px] font-semibold text-slate-200">CMPE 364 - Web &amp; Mobile System Final Project</p>
+                    <ul class="mt-2 space-y-1 text-[13px] text-slate-400">
+                        <li>Jose Enrico Ilagan</li>
+                        <li>Kenneth Crisostomo</li>
+                        <li>Myk Angelo M. Magsipoc</li>
+                        <li>Zuriel Elijah Valencia</li>
+                    </ul>
+                </div>
             </div>
             @foreach([
                 ['Product', [
