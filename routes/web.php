@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AssignmentController;
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\AttemptController;
 use App\Http\Controllers\Api\ProctoringController;
 use App\Http\Controllers\Api\AuthController;
@@ -18,6 +19,8 @@ Route::get('/', [PageController::class, 'home']);
 // Auth pages — guest only
 Route::get('/login',    [PageController::class, 'login'])->middleware('guest');
 Route::get('/register', [PageController::class, 'register'])->middleware('guest');
+Route::get('/forgot-password', [PageController::class, 'forgotPassword'])->middleware('guest');
+Route::get('/reset-password', [PageController::class, 'resetPassword'])->middleware('guest');
 
 // Email verification
 Route::get('/verify-email', [PageController::class, 'verifyEmail'])->name('verification.notice');
@@ -35,6 +38,9 @@ Route::get('/contact', [PageController::class, 'contact']);
 
 Route::post('/api/auth/login',    [AuthController::class, 'login'])->middleware('throttle:login');
 Route::post('/api/auth/register', [AuthController::class, 'register'])->middleware('throttle:register');
+Route::post('/api/auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:password-reset');
+Route::post('/api/auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:password-reset');
+Route::post('/api/contact', [ContactController::class, 'submit'])->middleware('throttle:contact');
 
 Route::middleware('auth')->group(function () {
     Route::post('/api/auth/logout', [AuthController::class, 'logout']);

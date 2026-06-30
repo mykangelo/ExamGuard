@@ -17,7 +17,7 @@ html, body {
     font-family: 'Plus Jakarta Sans', ui-sans-serif, sans-serif;
     overflow: hidden;
 }
-.sd-layout { display: flex; height: 100vh; overflow: hidden; }
+.sd-layout { display: flex; height: 100vh; height: 100dvh; overflow: hidden; }
 
 /* ── Sidebar (matches professor shell) ── */
 .pg-sidebar {
@@ -26,6 +26,7 @@ html, body {
     border-right: 0.5px solid rgba(255,255,255,0.08);
     display: flex; flex-direction: column;
     height: 100vh;
+    height: 100dvh;
 }
 .pg-sidebar-top { padding: 20px 16px 16px; flex-shrink: 0; }
 .pg-sidebar-brand {
@@ -95,13 +96,13 @@ html, body {
 /* ── Main workspace (matches professor shell) ── */
 .pg-main {
     flex: 1; display: flex; flex-direction: column;
-    min-width: 0; height: 100vh; background: #0f1e3d;
+    min-width: 0; height: 100vh; height: 100dvh; background: #0f1e3d;
     position: relative;
 }
 .pg-floating-actions {
     position: absolute;
-    top: 16px;
-    right: 20px;
+    top: max(16px, env(safe-area-inset-top, 0px));
+    right: max(20px, env(safe-area-inset-right, 0px));
     z-index: 30;
     display: flex;
     align-items: center;
@@ -254,7 +255,10 @@ html, body {
 .pg-dropdown .divider { height: 0.5px; background: rgba(255,255,255,0.08); margin: 4px 0; }
 .pg-dropdown .danger { color: #f87171; }
 .pg-body {
-    flex: 1; overflow-y: auto; padding: 20px;
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    padding: 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.08) transparent;
 }
@@ -535,7 +539,7 @@ html, body {
 .sd-link { background: none; border: none; color: #3b82f6; font-size: 12px; cursor: pointer; font-family: inherit; padding: 0; }
 .sd-link:hover { text-decoration: underline; }
 
-.sd-home-grid { display: flex; gap: 20px; max-width: 1100px; margin: 0 auto; align-items: flex-start; }
+.sd-home-grid { display: flex; gap: 20px; max-width: 1100px; margin: 0 auto; align-items: flex-start; width: 100%; }
 .sd-home-main { flex: 1; min-width: 0; }
 .sd-home-side { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; }
 
@@ -793,6 +797,7 @@ html, body {
 .sd-class-banner {
     height: 160px; border-radius: 14px; position: relative; overflow: hidden;
     margin-bottom: 20px; max-width: 1100px; margin-left: auto; margin-right: auto;
+    width: 100%;
 }
 .sd-class-banner-inner {
     position: absolute; inset: 0; display: flex; align-items: flex-end;
@@ -1058,13 +1063,27 @@ html, body {
     .sd-class-item { justify-content: center; padding: 8px 0; }
     .sd-join-link { justify-content: center; margin: 4px 0 0; width: 100%; }
     .sd-exam-shortcut { justify-content: center; }
-    .pg-floating-actions { top: 12px; right: 12px; gap: 8px; }
+    .pg-floating-actions { top: max(12px, env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); gap: 8px; }
     .pg-floating-notify { width: 40px; height: 40px; }
     .pg-floating-notify i { font-size: 17px; }
     .pg-floating-profile .pg-avatar { width: 32px; height: 32px; font-size: 12px; }
+    .pg-body { padding: 12px 12px calc(20px + env(safe-area-inset-bottom, 0px)); }
+    .sd-view { padding: 44px 0 16px; }
     .sd-class-grid { grid-template-columns: 1fr; }
-    .sd-home-columns { flex-direction: column; }
-    .sd-home-side { width: 100%; }
+    .sd-home-columns,
+    .sd-home-grid {
+        flex-direction: column;
+        gap: 16px;
+    }
+    .sd-home-side { width: 100%; max-width: none; }
+    .sd-home-grid .sd-home-side { order: -1; }
+    .sd-class-banner { height: 120px; margin-bottom: 16px; }
+    .sd-class-banner-inner { padding: 16px; }
+    .sd-class-banner h2 { font-size: 18px; }
+    .sd-stream-card { flex-wrap: wrap; }
+    .sd-stream-meta { white-space: normal; }
+    .sd-stream-actions { opacity: 1; flex-wrap: wrap; }
+    .sd-stream-title-row { align-items: flex-start; }
     .sd-cert-grid { grid-template-columns: 1fr; }
     .sd-stats-row { grid-template-columns: 1fr; }
     .pg-settings-row,

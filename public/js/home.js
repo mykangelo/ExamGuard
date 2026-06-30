@@ -62,12 +62,13 @@
         });
     });
 
-    /* ── Mobile nav toggle (if present) ────────────────────────────── */
-    var mobileToggle = document.getElementById('mobileMenuToggle');
-    var mobileMenu   = document.getElementById('mobileMenu');
+    /* ── Mobile nav toggle (marketing-header uses mobileNavBtn / mobileNav) ── */
+    var mobileToggle = document.getElementById('mobileNavBtn');
+    var mobileMenu   = document.getElementById('mobileNav');
     if (mobileToggle && mobileMenu) {
         mobileToggle.addEventListener('click', function () {
             mobileMenu.classList.toggle('hidden');
+            mobileToggle.setAttribute('aria-expanded', mobileMenu.classList.contains('hidden') ? 'false' : 'true');
         });
     }
 

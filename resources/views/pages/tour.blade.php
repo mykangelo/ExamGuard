@@ -43,7 +43,8 @@ $sidebarNav = [
 <div class="flex max-w-5xl mx-auto">
 
     {{-- ══ LEFT SIDEBAR ══ --}}
-    <aside class="hidden lg:block w-48 shrink-0 sticky top-[72px] self-start h-[calc(100vh-72px)] overflow-y-auto border-r border-white/[0.08] bg-[#0f1e3d]">
+    <aside class="hidden lg:block w-48 shrink-0 sticky self-start h-[calc(100vh-72px)] overflow-y-auto border-r border-white/[0.08] bg-[#0f1e3d]"
+           style="top: calc(72px + env(safe-area-inset-top, 0px));">
         <nav class="py-4 px-2">
             @foreach($sidebarNav as [$href, $icon, $label, $id])
             <a href="{{ $href }}"

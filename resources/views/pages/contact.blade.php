@@ -25,40 +25,58 @@
         {{-- Form --}}
         <div class="tf-reveal">
             <h2 class="mb-8 text-[1.8rem] font-[700] tracking-[-0.015em] text-white">Send us a message</h2>
-            <form id="contactForm" class="space-y-5">
+
+            <div id="contactSuccess" class="hidden mb-5 rounded-xl border border-emerald-400/40 bg-emerald-500/20 px-4 py-3 text-[14px] font-medium leading-relaxed" style="color: #d1fae5;">
+                <span style="color: inherit;"></span>
+            </div>
+            <div id="contactError" class="hidden mb-5 rounded-xl border border-red-400/40 bg-red-500/20 px-4 py-3 text-[14px] font-medium leading-relaxed" style="color: #fecaca;">
+                <span style="color: inherit;"></span>
+            </div>
+
+            <form id="contactForm" class="space-y-5" novalidate>
+                <input type="text" name="website" id="hp_contact" value="" autocomplete="off"
+                       tabindex="-1" aria-hidden="true"
+                       style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;">
+
                 <div class="grid gap-5 sm:grid-cols-2">
                     <div>
-                        <label class="mb-2 block text-[14px] font-[600] text-white/60">Full name</label>
-                        <input type="text"
+                        <label for="contactName" class="mb-2 block text-[14px] font-[600] text-white/60">Full name</label>
+                        <input id="contactName" name="name" type="text"
                                class="w-full rounded-xl border border-white/[0.08] bg-[#162444] px-4 py-3 text-[16px] text-white outline-none transition placeholder:text-white/25 focus:border-[#3b82f6]/50 focus:ring-2 focus:ring-[#3b82f6]/20"
-                               placeholder="Your name">
+                               placeholder="Your name" autocomplete="name">
                     </div>
                     <div>
-                        <label class="mb-2 block text-[14px] font-[600] text-white/60">Email address</label>
-                        <input type="email"
+                        <label for="contactEmail" class="mb-2 block text-[14px] font-[600] text-white/60">Email address</label>
+                        <input id="contactEmail" name="email" type="email"
                                class="w-full rounded-xl border border-white/[0.08] bg-[#162444] px-4 py-3 text-[16px] text-white outline-none transition placeholder:text-white/25 focus:border-[#3b82f6]/50 focus:ring-2 focus:ring-[#3b82f6]/20"
-                               placeholder="your@email.com">
+                               placeholder="your@email.com" autocomplete="email">
                     </div>
                 </div>
                 <div>
-                    <label class="mb-2 block text-[14px] font-[600] text-white/60">Subject</label>
-                    <select class="w-full rounded-xl border border-white/[0.08] bg-[#162444] px-4 py-3 text-[16px] text-white outline-none transition focus:border-[#3b82f6]/50 focus:ring-2 focus:ring-[#3b82f6]/20">
+                    <label for="contactSubject" class="mb-2 block text-[14px] font-[600] text-white/60">Subject</label>
+                    <select id="contactSubject" name="subject"
+                            class="w-full rounded-xl border border-white/[0.08] bg-[#162444] px-4 py-3 text-[16px] text-white outline-none transition focus:border-[#3b82f6]/50 focus:ring-2 focus:ring-[#3b82f6]/20">
                         <option value="" class="bg-[#162444]">Select a topic</option>
-                        <option class="bg-[#162444]">General inquiry</option>
-                        <option class="bg-[#162444]">Institution / sales</option>
-                        <option class="bg-[#162444]">Technical support</option>
-                        <option class="bg-[#162444]">Feature request</option>
-                        <option class="bg-[#162444]">Partnership</option>
+                        <option value="General inquiry" class="bg-[#162444]">General inquiry</option>
+                        <option value="Institution / sales" class="bg-[#162444]">Institution / sales</option>
+                        <option value="Technical support" class="bg-[#162444]">Technical support</option>
+                        <option value="Feature request" class="bg-[#162444]">Feature request</option>
+                        <option value="Partnership" class="bg-[#162444]">Partnership</option>
                     </select>
                 </div>
                 <div>
-                    <label class="mb-2 block text-[14px] font-[600] text-white/60">Message</label>
-                    <textarea class="w-full resize-none rounded-xl border border-white/[0.08] bg-[#162444] px-4 py-3 text-[16px] text-white outline-none transition placeholder:text-white/25 focus:border-[#3b82f6]/50 focus:ring-2 focus:ring-[#3b82f6]/20 min-h-36"
+                    <label for="contactMessage" class="mb-2 block text-[14px] font-[600] text-white/60">Message</label>
+                    <textarea id="contactMessage" name="message"
+                              class="w-full resize-none rounded-xl border border-white/[0.08] bg-[#162444] px-4 py-3 text-[16px] text-white outline-none transition placeholder:text-white/25 focus:border-[#3b82f6]/50 focus:ring-2 focus:ring-[#3b82f6]/20 min-h-36"
                               placeholder="How can we help?"></textarea>
                 </div>
-                <button type="submit"
-                        class="w-full rounded-full bg-white py-4 text-[16px] font-semibold text-[#0f1e3d] transition hover:scale-[1.02] hover:bg-white/90">
-                    Send message
+                <button id="contactSubmitBtn" type="submit"
+                        class="flex w-full items-center justify-center gap-2 rounded-full bg-white py-4 text-[16px] font-semibold text-[#0f1e3d] transition hover:scale-[1.02] hover:bg-white/90 disabled:opacity-60 disabled:cursor-not-allowed">
+                    <span id="contactSubmitText">Send message</span>
+                    <svg id="contactSpinner" class="hidden h-4 w-4 animate-spin text-[#0f1e3d]" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
                 </button>
             </form>
         </div>
@@ -99,6 +117,7 @@
 
 @endsection
 @push('scripts')
-<script src="/js/api-client.js"></script>
+<script src="/js/api-client.js?v=4"></script>
 <script src="/js/home.js"></script>
+<script src="/js/contact.js?v=1"></script>
 @endpush

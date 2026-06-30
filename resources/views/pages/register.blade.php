@@ -2,12 +2,12 @@
 @section('title', 'Sign Up | ExamGuard')
 
 @section('content')
-<div class="flex min-h-screen">
+<div class="auth-mobile-shell flex min-h-screen min-h-[100dvh]">
 
     @include('partials.auth-panel')
 
     {{-- ══ RIGHT PANEL — form ══ --}}
-    <div class="flex flex-1 flex-col items-center justify-center px-6 py-12"
+    <div class="flex w-full min-w-0 flex-1 flex-col items-center justify-center px-6 py-12"
          style="background: linear-gradient(to right,
                     #0a1628 0%,
                     #1d3a60 4%,
@@ -17,11 +17,7 @@
                     #edf5fb 26%,
                     #f8fafc 32%);">
 
-        {{-- Mobile logo --}}
-        <div class="mb-8 flex items-center gap-2 lg:hidden">
-            <img src="/images/logo.png" alt="examguard" class="h-10 w-auto object-contain">
-            <span class="text-slate-800" style="font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:600; letter-spacing:-0.4px;">examguard.</span>
-        </div>
+        @include('partials.auth-mobile-header')
 
         <div class="w-full max-w-sm relative overflow-hidden">
 
@@ -51,6 +47,19 @@
                         </button>
                     </div>
                     <p id="roleMsg" class="field-msg err hidden mt-1.5"><i class="ti ti-alert-circle text-[12px]"></i><span>Please select a role to continue.</span></p>
+
+                    <div id="professorMobileNotice" class="hidden mb-1 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                        <div class="flex items-start gap-2.5">
+                            <i class="ti ti-device-laptop text-amber-600 text-[18px] shrink-0 mt-0.5"></i>
+                            <div class="min-w-0">
+                                <p class="text-[13px] font-[600] text-amber-900">Professor accounts work best on a laptop or PC</p>
+                                <p class="mt-1 text-[12.5px] leading-[1.55] text-amber-800">
+                                    Creating exams, live proctoring, and monitoring are designed for larger screens.
+                                    For the best experience, sign up on a computer — or choose <strong>Student</strong> if you are taking exams on this phone.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {{-- Error banner --}}
@@ -208,5 +217,5 @@
 
 @push('scripts')
 <script src="/js/api-client.js?v=3"></script>
-<script src="/js/register.js?v=3"></script>
+<script src="/js/register.js?v=4"></script>
 @endpush

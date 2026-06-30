@@ -78,6 +78,12 @@
       request("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password, role, website: honeypot || "" }) }),
     register: (name, email, password, password_confirmation, role, honeypot) =>
       request("/api/auth/register", { method: "POST", body: JSON.stringify({ name, email, password, password_confirmation, role, website: honeypot || "" }) }),
+    forgotPassword: (email, honeypot) =>
+      request("/api/auth/forgot-password", { method: "POST", body: JSON.stringify({ email, website: honeypot || "" }) }),
+    resetPassword: (payload) =>
+      request("/api/auth/reset-password", { method: "POST", body: JSON.stringify(payload) }),
+    contact: (payload) =>
+      request("/api/contact", { method: "POST", body: JSON.stringify(payload) }),
     logout: () => request("/api/auth/logout", { method: "POST" }),
     me: () => request("/api/auth/me"),
     updateProfile: (payload) =>

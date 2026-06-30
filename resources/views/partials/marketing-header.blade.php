@@ -1,7 +1,7 @@
 @php $activePage = $activePage ?? ''; @endphp
 
 {{-- ── SINGLE STICKY NAV BAR (Typeform-style) ── --}}
-<header class="sticky top-0 z-50 bg-[#0f1e3d]">
+<header class="mkt-site-header sticky top-0 z-50 bg-[#0f1e3d]">
     <div class="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-4">
 
         {{-- ── Left: Logo ── --}}
@@ -80,8 +80,11 @@
                 Log in
             </a>
             <button id="mobileNavBtn"
-                    class="rounded-lg p-1.5 text-white/70 transition hover:bg-white/5 hover:text-white"
-                    aria-label="Menu">
+                    type="button"
+                    class="flex h-11 w-11 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/5 hover:text-white"
+                    aria-label="Open menu"
+                    aria-expanded="false"
+                    aria-controls="mobileNav">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>

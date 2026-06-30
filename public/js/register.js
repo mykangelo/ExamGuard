@@ -5,6 +5,7 @@
     var roleProf      = document.getElementById('roleProf');
     var roleStud      = document.getElementById('roleStud');
     var roleMsg       = document.getElementById('roleMsg');
+    var professorMobileNotice = document.getElementById('professorMobileNotice');
     var selectedRole  = document.getElementById('selectedRole');
     var form          = document.getElementById('registerForm');
     var submitBtn     = document.getElementById('registerBtn');
@@ -135,6 +136,18 @@
 
     if (errorClose) errorClose.addEventListener('click', hideError);
 
+    function isPhoneLike() {
+        var narrow = window.matchMedia('(max-width: 768px)').matches;
+        var mobileUa = /iPhone|iPod|Android.+Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        return narrow || mobileUa;
+    }
+
+    function updateProfessorMobileNotice() {
+        if (!professorMobileNotice) return;
+        var show = isPhoneLike() && selectedRole.value === 'professor';
+        professorMobileNotice.classList.toggle('hidden', !show);
+    }
+
     /* ── Role selection ────────────────────────────────────────────── */
     [roleProf, roleStud].forEach(function (btn) {
         if (!btn) return;
@@ -145,8 +158,12 @@
             btn.classList.add('selected');
             selectedRole.value = btn.dataset.role;
             roleMsg.classList.add('hidden');
+            updateProfessorMobileNotice();
         });
     });
+
+    window.addEventListener('resize', updateProfessorMobileNotice);
+    window.addEventListener('orientationchange', updateProfessorMobileNotice);
 
     /* ── Password visibility toggle ───────────────────────────────── */
     if (togglePass) {

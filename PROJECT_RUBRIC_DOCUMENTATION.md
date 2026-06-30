@@ -547,7 +547,9 @@ This matches the rubric’s “mobile app communicates with PHP backend via JSON
 | **Visibility API** | Tab switch detection (`visibilitychange`) |
 | **Local storage** | `sessionStorage` for route state, draft exam builder |
 
-**Future enhancement (optional):** PWA manifest + “Add to Home Screen” for app-icon experience.
+**PWA / Add to Home Screen:** `public/manifest.webmanifest` + Apple meta tags in `partials/pwa-head.blade.php` (Safari → Share → Add to Home Screen).
+
+**Future enhancement (optional):** Service worker for offline shell caching.
 
 ---
 

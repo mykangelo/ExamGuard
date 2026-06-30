@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -119,6 +120,64 @@ class AuthController extends Controller
             'email'              => $user->email,
             'email_sent'         => true,
         ], 201);
+    }
+
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        if ($request->filled('website')) {
+            return response()->json(['error' => 'Invalid request.'], 400);
+        }
+
+        $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        try {
+            Password::sendResetLink($request->only('email'));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'If an account exists for that email, we sent password reset instructions.',
+        ]);
+    }
+
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'token' => ['required', 'string'],
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => $password,
+                    'remember_token' => Str::random(60),
+                ])->save();
+
+                RateLimiter::clear('login.'.Str::lower($user->email).'.'.request()->ip());
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Password updated. You can sign in now.',
+            ]);
+        }
+
+        return response()->json([
+            'error' => match ($status) {
+                Password::INVALID_TOKEN => 'This reset link is invalid or has expired.',
+                Password::INVALID_USER => 'We could not find an account with that email.',
+                default => 'Unable to reset password. Please try again.',
+            },
+        ], 422);
     }
 
     public function logout(Request $request): JsonResponse

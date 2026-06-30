@@ -2,9 +2,10 @@
 <html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'ExamGuard')</title>
+    @include('partials.pwa-head')
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -114,6 +115,19 @@
 
         .auth-back-link { transition: color 0.2s ease; }
         .auth-back-link:hover { color: rgba(255,255,255,0.75) !important; }
+
+        :root {
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
+        }
+        @media (max-width: 1023px) {
+            .auth-mobile-shell {
+                padding-top: var(--safe-top);
+                padding-left: var(--safe-left);
+                padding-right: var(--safe-right);
+            }
+        }
 
         /* ── Slide transition animations ──────────── */
         @keyframes authCaptionIn {

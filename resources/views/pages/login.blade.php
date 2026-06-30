@@ -2,12 +2,12 @@
 @section('title', 'Sign In | ExamGuard')
 
 @section('content')
-<div class="flex min-h-screen">
+<div class="auth-mobile-shell flex min-h-screen min-h-[100dvh]">
 
     @include('partials.auth-panel')
 
     {{-- ══ RIGHT PANEL — form ══ --}}
-    <div class="flex flex-1 flex-col items-center justify-center px-6 py-12"
+    <div class="flex w-full min-w-0 flex-1 flex-col items-center justify-center px-6 py-12"
          style="background: linear-gradient(to right,
                     #0a1628 0%,
                     #1d3a60 4%,
@@ -17,11 +17,7 @@
                     #edf5fb 26%,
                     #f8fafc 32%);">
 
-        {{-- Mobile logo --}}
-        <div class="mb-8 flex items-center gap-2 lg:hidden">
-            <img src="/images/logo.png" alt="examguard" class="h-10 w-auto object-contain">
-            <span class="text-slate-800" style="font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:600; letter-spacing:-0.4px;">examguard.</span>
-        </div>
+        @include('partials.auth-mobile-header')
 
         <div class="w-full max-w-sm">
 
@@ -56,7 +52,7 @@
                     <div>
                         <div class="mb-1.5 flex items-center justify-between">
                             <label for="passwordInput" class="text-[13px] font-[500] text-slate-600">Password</label>
-                            <a href="#" class="text-[12px] text-[#3b82f6] transition hover:text-blue-700">Forgot password?</a>
+                            <a href="/forgot-password" class="text-[12px] text-[#3b82f6] transition hover:text-blue-700">Forgot password?</a>
                         </div>
                         <div class="relative">
                             <input id="passwordInput" type="password" class="auth-input pr-11" placeholder="Enter your password" autocomplete="current-password">
@@ -161,7 +157,7 @@
                 {{-- Footer note --}}
                 <p class="text-[12.5px] text-slate-400 leading-[1.75]">
                     The sign-in form will unlock automatically.<br>
-                    If this wasn't you, consider resetting your password.
+                    If this wasn't you, <a href="/forgot-password" class="font-[600] text-[#3b82f6] underline underline-offset-2 transition hover:text-blue-700">reset your password</a>.
                 </p>
 
             </div>{{-- /lockoutPanel --}}
